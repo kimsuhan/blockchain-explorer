@@ -37,5 +37,5 @@ services:
     ports:
       - "${API_PORT:-4000}:4000"
 # 사용법:
-# 개발환경: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
-# 프로덕션: docker-compose up
+# 개발환경: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+# 프로덕션: docker compose up

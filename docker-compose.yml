@@ -43,4 +43,4 @@ networks:
   blockchain-explorer:
     driver: bridge
 # 개발용 오버라이드를 위한 추가 compose 파일
-# docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# docker compose -f docker-compose.yml -f docker-compose.dev.yml up

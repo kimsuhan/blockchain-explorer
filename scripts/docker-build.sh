@@ -55,7 +55,7 @@ check_requirements() {
         exit 1
     fi
     
-    if ! command -v docker-compose &> /dev/null; then
+    if ! docker compose version &> /dev/null; then
         log_error "Docker Compose가 설치되지 않았습니다."
         exit 1
     fi
@@ -89,10 +89,10 @@ compose_up() {
     
     if [ "$env" = "dev" ]; then
         log_info "개발 환경으로 실행 중..."
-        docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+        docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
     else
         log_info "프로덕션 환경으로 실행 중..."
-        docker-compose up --build
+        docker compose up --build
     fi
 }
 
@@ -104,15 +104,15 @@ update_services() {
     
     # 기존 컨테이너 중지
     log_info "기존 컨테이너 중지..."
-    docker-compose down
+    docker compose down
     
     # 새로 빌드하여 실행
     if [ "$env" = "dev" ]; then
         log_info "개발 환경으로 업데이트..."
-        docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+        docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
     else
         log_info "프로덕션 환경으로 업데이트..."
-        docker-compose up --build
+        docker compose up --build
     fi
     
     log_success "서비스 업데이트 완료"
@@ -121,14 +121,14 @@ update_services() {
 # 서비스 재시작 (빌드 없이)
 restart_services() {
     log_info "서비스 재시작 중..."
-    docker-compose restart
+    docker compose restart
     log_success "서비스 재시작 완료"
 }
 
 # 컨테이너 중지
 stop_containers() {
     log_info "모든 컨테이너 중지 중..."
-    docker-compose down
+    docker compose down
     log_success "컨테이너 중지 완료"
 }
 
@@ -139,7 +139,7 @@ clean_all() {
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         log_info "컨테이너 중지 및 제거 중..."
-        docker-compose down --rmi all --volumes --remove-orphans
+        docker compose down --rmi all --volumes --remove-orphans
         
         log_info "관련 이미지 제거 중..."
         docker rmi $(docker images "blockchain-explorer*" -q) 2>/dev/null || true

@@ -248,8 +248,8 @@ pnpm docker:compose:prod
 pnpm docker:compose:dev
 
 # 수동 실행
-docker-compose up --build                    # 프로덕션
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up  # 개발
+docker compose up --build                    # 프로덕션
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up  # 개발
 ```
 
 #### 2. 단일 이미지 배포
