@@ -32,11 +32,11 @@
     "docker:build": "docker build -t blockchain-explorer .",
     "docker:build:prod": "docker build -t blockchain-explorer:latest .",
     "docker:run": "docker run -p 3000:3000 -p 4000:4000 blockchain-explorer",
-    "docker:compose:up": "docker-compose up",
-    "docker:compose:up:build": "docker-compose up --build",
-    "docker:compose:down": "docker-compose down",
-    "docker:compose:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
-    "docker:compose:prod": "docker-compose -f docker-compose.yml up --build"
+    "docker:compose:up": "docker compose up",
+    "docker:compose:up:build": "docker compose up --build",
+    "docker:compose:down": "docker compose down",
+    "docker:compose:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
+    "docker:compose:prod": "docker compose -f docker-compose.yml up --build"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.0",

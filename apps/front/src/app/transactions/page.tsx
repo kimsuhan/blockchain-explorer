@@ -1,12 +1,12 @@
 // 트랜잭션 목록 페이지 - 최신 트랜잭션들을 페이지네이션과 함께 표시
-'use client';
+"use client";
 
-import ErrorMessage from '@/components/ErrorMessage';
-import LoadingSpinner from '@/components/LoadingSpinner';
-import { getRecentBlocks, getTransactionsFromBlock, TransactionInfo } from '@/lib/web3';
-import { CreditCard, Lightbulb, RefreshCw } from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import ErrorMessage from "@/components/ErrorMessage";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { getRecentBlocks, getTransactionsFromBlock, TransactionInfo } from "@/lib/web3";
+import { CreditCard, Lightbulb, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function TransactionsPage() {
   // 상태 관리
@@ -15,7 +15,7 @@ export default function TransactionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalTransactions, setTotalTransactions] = useState<number>(0);
-  
+
   // 페이지당 표시할 트랜잭션 수
   const TRANSACTIONS_PER_PAGE = 25;
 
@@ -27,17 +27,17 @@ export default function TransactionsPage() {
 
       // 최신 블록들에서 트랜잭션 수집
       const recentBlocks = await getRecentBlocks(50); // 최근 50개 블록에서 트랜잭션 수집
-      
-      let allTransactions: TransactionInfo[] = [];
-      
+
+      const allTransactions: TransactionInfo[] = [];
+
       // 각 블록에서 트랜잭션 가져오기
       for (const block of recentBlocks) {
         if (block.transactionCount > 0) {
           const blockTransactions = await getTransactionsFromBlock(block.number);
           // 트랜잭션에 블록 타임스탬프 추가
-          const transactionsWithTimestamp = blockTransactions.map(tx => ({
+          const transactionsWithTimestamp = blockTransactions.map((tx) => ({
             ...tx,
-            timestamp: block.timestamp
+            timestamp: block.timestamp,
           }));
           allTransactions.push(...transactionsWithTimestamp);
         }
@@ -45,19 +45,18 @@ export default function TransactionsPage() {
 
       // 시간순으로 정렬 (최신 순)
       allTransactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-      
+
       setTotalTransactions(allTransactions.length);
 
       // 현재 페이지에 해당하는 트랜잭션들만 표시
       const startIndex = (page - 1) * TRANSACTIONS_PER_PAGE;
       const endIndex = startIndex + TRANSACTIONS_PER_PAGE;
       const paginatedTransactions = allTransactions.slice(startIndex, endIndex);
-      
-      setTransactions(paginatedTransactions);
 
+      setTransactions(paginatedTransactions);
     } catch (err) {
-      console.error('트랜잭션 데이터 로딩 실패:', err);
-      setError('트랜잭션 데이터를 불러오는데 실패했습니다. 테스트넷 연결 상태를 확인해주세요.');
+      console.error("트랜잭션 데이터 로딩 실패:", err);
+      setError("트랜잭션 데이터를 불러오는데 실패했습니다. 테스트넷 연결 상태를 확인해주세요.");
     } finally {
       setIsLoading(false);
     }
@@ -78,8 +77,8 @@ export default function TransactionsPage() {
 
   // 시간을 읽기 쉬운 형태로 변환
   const formatTime = (timestamp?: number) => {
-    if (!timestamp) return '-';
-    return new Date(timestamp * 1000).toLocaleString('ko-KR');
+    if (!timestamp) return "-";
+    return new Date(timestamp * 1000).toLocaleString("ko-KR");
   };
 
   // 해시를 짧게 표시
@@ -95,12 +94,12 @@ export default function TransactionsPage() {
   // ETH 값 포맷팅
   const formatEther = (value: string) => {
     const num = parseFloat(value);
-    return num === 0 ? '0' : num.toFixed(4);
+    return num === 0 ? "0" : num.toFixed(4);
   };
 
   // 가스 값 포맷팅
   const formatGas = (gas?: string) => {
-    if (!gas) return '-';
+    if (!gas) return "-";
     return parseFloat(gas).toLocaleString();
   };
 
@@ -124,7 +123,8 @@ export default function TransactionsPage() {
             트랜잭션 목록
           </h1>
           <p className="text-gray-600 mt-2">
-            총 {totalTransactions.toLocaleString()}개의 트랜잭션 (페이지 {currentPage} / {totalPages})
+            총 {totalTransactions.toLocaleString()}개의 트랜잭션 (페이지 {currentPage} /{" "}
+            {totalPages})
           </p>
         </div>
 
@@ -147,21 +147,15 @@ export default function TransactionsPage() {
           <div className="mt-1 text-3xl font-bold text-gray-900">
             {totalTransactions.toLocaleString()}
           </div>
-          <div className="text-sm text-gray-500 mt-1">
-            최근 50개 블록
-          </div>
+          <div className="text-sm text-gray-500 mt-1">최근 50개 블록</div>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
           <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
             현재 페이지
           </div>
-          <div className="mt-1 text-3xl font-bold text-gray-900">
-            {transactions.length}
-          </div>
-          <div className="text-sm text-gray-500 mt-1">
-            표시 중인 트랜잭션
-          </div>
+          <div className="mt-1 text-3xl font-bold text-gray-900">{transactions.length}</div>
+          <div className="text-sm text-gray-500 mt-1">표시 중인 트랜잭션</div>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-purple-500">
@@ -169,23 +163,17 @@ export default function TransactionsPage() {
             성공한 트랜잭션
           </div>
           <div className="mt-1 text-3xl font-bold text-gray-900">
-            {transactions.filter(tx => tx.status === 1).length}
+            {transactions.filter((tx) => tx.status === 1).length}
           </div>
-          <div className="text-sm text-gray-500 mt-1">
-            현재 페이지 기준
-          </div>
+          <div className="text-sm text-gray-500 mt-1">현재 페이지 기준</div>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-orange-500">
-          <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-            총 전송량
-          </div>
+          <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">총 전송량</div>
           <div className="mt-1 text-2xl font-bold text-gray-900">
             {transactions.reduce((total, tx) => total + parseFloat(tx.value), 0).toFixed(2)} ETH
           </div>
-          <div className="text-sm text-gray-500 mt-1">
-            현재 페이지 기준
-          </div>
+          <div className="text-sm text-gray-500 mt-1">현재 페이지 기준</div>
         </div>
       </div>
 
@@ -226,7 +214,7 @@ export default function TransactionsPage() {
                 <tr key={tx.hash} className="hover:bg-gray-50 transition-colors">
                   {/* 트랜잭션 해시 */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Link 
+                    <Link
                       href={`/transactions/${tx.hash}`}
                       className="text-blue-600 hover:text-blue-800 font-medium font-mono text-sm"
                     >
@@ -236,7 +224,7 @@ export default function TransactionsPage() {
 
                   {/* 블록 번호 */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Link 
+                    <Link
                       href={`/blocks/${tx.blockNumber}`}
                       className="text-gray-600 hover:text-blue-600 font-medium"
                     >
@@ -246,7 +234,7 @@ export default function TransactionsPage() {
 
                   {/* 보내는 주소 */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">
-                    <span 
+                    <span
                       className="cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
                       title={tx.from}
                     >
@@ -257,7 +245,7 @@ export default function TransactionsPage() {
                   {/* 받는 주소 */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">
                     {tx.to ? (
-                      <span 
+                      <span
                         className="cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
                         title={tx.to}
                       >
@@ -271,9 +259,11 @@ export default function TransactionsPage() {
                   {/* 전송 금액 */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <div className="flex items-center">
-                      <span className={`font-medium ${
-                        parseFloat(tx.value) > 0 ? 'text-green-600' : 'text-gray-600'
-                      }`}>
+                      <span
+                        className={`font-medium ${
+                          parseFloat(tx.value) > 0 ? "text-green-600" : "text-gray-600"
+                        }`}
+                      >
                         {formatEther(tx.value)} ETH
                       </span>
                     </div>
@@ -286,14 +276,16 @@ export default function TransactionsPage() {
 
                   {/* 트랜잭션 상태 */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      tx.status === 1 
-                        ? 'bg-green-100 text-green-800' 
-                        : tx.status === 0
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {tx.status === 1 ? '✓ 성공' : tx.status === 0 ? '✗ 실패' : '⏳ 대기중'}
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        tx.status === 1
+                          ? "bg-green-100 text-green-800"
+                          : tx.status === 0
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {tx.status === 1 ? "✓ 성공" : tx.status === 0 ? "✗ 실패" : "⏳ 대기중"}
                     </span>
                   </td>
 
@@ -319,7 +311,9 @@ export default function TransactionsPage() {
           <div className="text-center py-12">
             <div className="text-4xl mb-4">📪</div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">트랜잭션이 없습니다</h3>
-            <p className="text-gray-500">아직 생성된 트랜잭션이 없거나 데이터를 불러올 수 없습니다.</p>
+            <p className="text-gray-500">
+              아직 생성된 트랜잭션이 없거나 데이터를 불러올 수 없습니다.
+            </p>
           </div>
         )}
       </div>
@@ -329,11 +323,12 @@ export default function TransactionsPage() {
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              총 {totalTransactions.toLocaleString()}개 트랜잭션 중{' '}
+              총 {totalTransactions.toLocaleString()}개 트랜잭션 중{" "}
               <span className="font-medium">
-                {((currentPage - 1) * TRANSACTIONS_PER_PAGE) + 1}-
+                {(currentPage - 1) * TRANSACTIONS_PER_PAGE + 1}-
                 {Math.min(currentPage * TRANSACTIONS_PER_PAGE, totalTransactions)}
-              </span>번째 표시
+              </span>
+              번째 표시
             </div>
 
             <div className="flex items-center space-x-2">
@@ -343,8 +338,8 @@ export default function TransactionsPage() {
                 disabled={currentPage === 1}
                 className={`px-3 py-2 rounded-md text-sm font-medium ${
                   currentPage === 1
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 이전
@@ -355,15 +350,15 @@ export default function TransactionsPage() {
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   const pageNum = Math.max(1, currentPage - 2) + i;
                   if (pageNum > totalPages) return null;
-                  
+
                   return (
                     <button
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
                       className={`px-3 py-2 rounded-md text-sm font-medium ${
                         pageNum === currentPage
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                          ? "bg-blue-600 text-white"
+                          : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                       }`}
                     >
                       {pageNum}
@@ -378,8 +373,8 @@ export default function TransactionsPage() {
                 disabled={currentPage === totalPages}
                 className={`px-3 py-2 rounded-md text-sm font-medium ${
                   currentPage === totalPages
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 다음
@@ -396,11 +391,22 @@ export default function TransactionsPage() {
           <span>트랜잭션 이해하기</span>
         </h3>
         <ul className="text-sm text-green-700 space-y-1">
-          <li>• <strong>트랜잭션 해시</strong>: 각 트랜잭션의 고유 식별자입니다</li>
-          <li>• <strong>보내는 곳/받는 곳</strong>: 이더를 보내는 주소와 받는 주소입니다</li>
-          <li>• <strong>가스 사용</strong>: 트랜잭션 처리에 사용된 가스 양입니다</li>
-          <li>• <strong>상태</strong>: ✓ 성공 = 정상 처리, ✗ 실패 = 처리 실패, ⏳ 대기중 = 아직 처리 중</li>
-          <li>• <strong>컨트랙트 생성</strong>: 새로운 스마트 컨트랙트가 배포된 트랜잭션입니다</li>
+          <li>
+            • <strong>트랜잭션 해시</strong>: 각 트랜잭션의 고유 식별자입니다
+          </li>
+          <li>
+            • <strong>보내는 곳/받는 곳</strong>: 이더를 보내는 주소와 받는 주소입니다
+          </li>
+          <li>
+            • <strong>가스 사용</strong>: 트랜잭션 처리에 사용된 가스 양입니다
+          </li>
+          <li>
+            • <strong>상태</strong>: ✓ 성공 = 정상 처리, ✗ 실패 = 처리 실패, ⏳ 대기중 = 아직 처리
+            중
+          </li>
+          <li>
+            • <strong>컨트랙트 생성</strong>: 새로운 스마트 컨트랙트가 배포된 트랜잭션입니다
+          </li>
         </ul>
       </div>
     </div>

@@ -1,5 +1,5 @@
 // Web3 연결을 위한 유틸리티 파일
-import { ethers } from "ethers";
+import { ethers, Transaction } from "ethers";
 
 // 노드 연결 설정
 export const LOCAL_RPC_URL = process.env.RPC_URL || "http://forlong.io:8545";
@@ -10,16 +10,16 @@ export const provider = new ethers.JsonRpcProvider(LOCAL_RPC_URL);
 // 기본 계정들 가져오기
 export const getDefaultAccounts = (): string[] => {
   const accountsString = process.env.DEFAULT_ACCOUNTS;
-  console.log('DEFAULT_ACCOUNTS 환경변수:', accountsString);
-  console.log('RPC_URL 환경변수 (비교용):', process.env.RPC_URL);
-  
+  console.log("DEFAULT_ACCOUNTS 환경변수:", accountsString);
+  console.log("RPC_URL 환경변수 (비교용):", process.env.RPC_URL);
+
   if (!accountsString) {
-    console.warn('DEFAULT_ACCOUNTS 환경변수가 설정되지 않았습니다.');
+    console.warn("DEFAULT_ACCOUNTS 환경변수가 설정되지 않았습니다.");
     return [];
   }
-  
-  const accounts = accountsString.split(',').map(addr => addr.trim());
-  console.log('파싱된 계정들:', accounts);
+
+  const accounts = accountsString.split(",").map((addr) => addr.trim());
+  console.log("파싱된 계정들:", accounts);
   return accounts;
 };
 
@@ -48,7 +48,6 @@ export interface TransactionInfo {
   status?: number;
 }
 
-
 // 최신 블록 정보 가져오기
 export async function getLatestBlock(): Promise<BlockInfo | null> {
   try {
@@ -57,7 +56,7 @@ export async function getLatestBlock(): Promise<BlockInfo | null> {
 
     return {
       number: block.number,
-      hash: block.hash,
+      hash: block.hash ?? "-",
       timestamp: block.timestamp,
       transactionCount: block.transactions.length,
       gasUsed: block.gasUsed.toString(),
@@ -141,7 +140,7 @@ export async function getTransactionByHash(txHash: string): Promise<TransactionI
       gasUsed: receipt?.gasUsed.toString(),
       gasPrice: tx.gasPrice?.toString() || "0",
       timestamp,
-      status: receipt?.status,
+      status: receipt?.status ?? 0,
     };
   } catch (error) {
     console.error(`트랜잭션 ${txHash} 가져오기 실패:`, error);
@@ -174,18 +173,20 @@ export async function getTransactionsFromBlock(blockNumber: number): Promise<Tra
         const txInfo = await getTransactionByHash(tx);
         if (txInfo) transactions.push(txInfo);
       } else {
+        const txInfo = tx as Transaction;
+
         // 트랜잭션 전체 정보가 있는 경우
-        const receipt = await provider.getTransactionReceipt(tx.hash);
+        const receipt = await provider.getTransactionReceipt(txInfo.hash ?? "");
         transactions.push({
-          hash: tx.hash,
-          blockNumber: tx.blockNumber || 0,
-          from: tx.from,
-          to: tx.to || "",
-          value: ethers.formatEther(tx.value),
+          hash: txInfo.hash ?? "",
+          blockNumber: 0,
+          from: txInfo.from ?? "",
+          to: txInfo.to ?? "",
+          value: ethers.formatEther(txInfo.value),
           gasUsed: receipt?.gasUsed.toString(),
-          gasPrice: tx.gasPrice?.toString() || "0",
+          gasPrice: txInfo.gasPrice?.toString() || "0",
           timestamp: block.timestamp,
-          status: receipt?.status,
+          status: receipt?.status ?? 0,
         });
       }
     }
