@@ -43,7 +43,12 @@ show_usage() {
     echo ""
     echo "옵션:"
     echo "  -t TAG       이미지 태그 지정 (기본값: latest)"
+    echo "  -e ENV       환경변수 파일 지정 (예: -e production)"
+    echo "  -d           백그라운드에서 실행 (detached 모드)"
     echo "  -h           이 도움말 표시"
+    echo ""
+    echo "환경변수 예시:"
+    echo "  FRONTEND_PORT=8080 API_PORT=8081 $0 update -d"
 }
 
 # 환경 확인
@@ -86,19 +91,27 @@ build_single() {
 # Docker Compose 빌드 및 실행
 compose_up() {
     local env=${1:-prod}
+    local detached=${2:-""}
     
     if [ "$env" = "dev" ]; then
         log_info "개발 환경으로 실행 중..."
-        docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+        docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build $detached
     else
         log_info "프로덕션 환경으로 실행 중..."
-        docker compose up --build
+        docker compose up --build $detached
+    fi
+    
+    if [ -n "$detached" ]; then
+        log_success "서비스가 백그라운드에서 시작되었습니다"
+        log_info "상태 확인: docker compose ps"
+        log_info "로그 확인: docker compose logs -f"
     fi
 }
 
 # 업데이트 (중지 → 빌드 → 실행)
 update_services() {
     local env=${1:-prod}
+    local detached=${2:-""}
     
     log_info "서비스 업데이트 중..."
     
@@ -109,13 +122,19 @@ update_services() {
     # 새로 빌드하여 실행
     if [ "$env" = "dev" ]; then
         log_info "개발 환경으로 업데이트..."
-        docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+        docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build $detached
     else
         log_info "프로덕션 환경으로 업데이트..."
-        docker compose up --build
+        docker compose up --build $detached
     fi
     
-    log_success "서비스 업데이트 완료"
+    if [ -n "$detached" ]; then
+        log_success "서비스가 백그라운드에서 업데이트되었습니다"
+        log_info "상태 확인: docker compose ps"
+        log_info "로그 확인: docker compose logs -f"
+    else
+        log_success "서비스 업데이트 완료"
+    fi
 }
 
 # 서비스 재시작 (빌드 없이)
@@ -154,6 +173,7 @@ clean_all() {
 main() {
     local command=""
     local tag="latest"
+    local detached_mode=""
     
     # 파라미터 파싱
     while [[ $# -gt 0 ]]; do
@@ -194,6 +214,10 @@ main() {
                 tag="$2"
                 shift 2
                 ;;
+            -d|--detach)
+                detached_mode="-d"
+                shift
+                ;;
             -h|--help)
                 show_usage
                 exit 0
@@ -221,16 +245,16 @@ main() {
             build_single "$tag"
             ;;
         compose)
-            compose_up "prod"
+            compose_up "prod" "$detached_mode"
             ;;
         dev)
-            compose_up "dev"
+            compose_up "dev" "$detached_mode"
             ;;
         prod)
-            compose_up "prod"
+            compose_up "prod" "$detached_mode"
             ;;
         update)
-            update_services "prod"
+            update_services "prod" "$detached_mode"
             ;;
         restart)
             restart_services

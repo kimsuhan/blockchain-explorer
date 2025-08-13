@@ -312,6 +312,60 @@ pnpm docker:restart
 
 # 개발환경 업데이트
 ./scripts/docker-build.sh dev
+
+# 프로덕션 환경으로 업데이트
+pnpm docker:prod:update
+```
+
+#### 🌐 실서버 배포 시 포트 변경
+```bash
+# 방법 1: 환경변수로 포트 지정
+FRONTEND_PORT=8080 API_PORT=8081 pnpm docker:update
+
+# 방법 2: .env 파일에서 포트 설정
+# .env 파일에 추가:
+# FRONTEND_PORT=8080
+# API_PORT=8081
+
+# 방법 3: 프로덕션 환경 파일 사용
+pnpm docker:prod:update  # .env.production 파일 사용
+
+# 방법 4: 일회성 환경변수
+FRONTEND_PORT=8080 API_PORT=8081 docker compose up --build
+```
+
+#### 🔄 백그라운드 실행 (서버용)
+```bash
+# 백그라운드에서 업데이트 및 실행
+pnpm docker:update:bg
+
+# 프로덕션 환경 백그라운드 실행  
+pnpm docker:prod:update:bg
+
+# 간편한 백그라운드 실행
+pnpm docker:bg
+
+# 스크립트로 직접 실행
+./scripts/docker-build.sh update -d
+
+# 포트 변경과 함께 백그라운드 실행
+FRONTEND_PORT=8080 API_PORT=8081 ./scripts/docker-build.sh update -d
+```
+
+#### 📊 백그라운드 서비스 관리
+```bash
+# 서비스 상태 확인
+docker compose ps
+
+# 실시간 로그 보기
+docker compose logs -f
+
+# 개별 서비스 로그
+docker compose logs -f api      # API 로그만
+docker compose logs -f frontend # Frontend 로그만
+
+# 서비스 중지
+docker compose down
 ```
 
 #### 🔄 단계별 업데이트
