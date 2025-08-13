@@ -1,5 +1,5 @@
 # 개발환경용 Dockerfile
-FROM node:22
+FROM node:22-alpine
 
 # 필수 패키지 설치
 RUN apk add --no-cache libc6-compat curl

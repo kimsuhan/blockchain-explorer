@@ -1,5 +1,5 @@
 # 전체 스택을 하나의 이미지로 빌드하는 다단계 Dockerfile
-FROM node:22 AS base
+FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat
 RUN npm install -g pnpm
 
@@ -39,12 +39,12 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 appuser
 
-# API 파일들 복사
+# API 파일들 복사 (루트 node_modules와 앱별 node_modules 모두 필요)
 COPY --from=api-builder --chown=appuser:nodejs /app/apps/api/dist ./api
-COPY --from=api-builder --chown=appuser:nodejs /app/apps/api/node_modules ./api/node_modules
+COPY --from=api-builder --chown=appuser:nodejs /app/node_modules ./api/node_modules
 COPY --from=api-builder --chown=appuser:nodejs /app/apps/api/package.json ./api/
 
-# Frontend 파일들 복사
+# Frontend 파일들 복사 (standalone 빌드의 모든 필요한 파일들)
 COPY --from=frontend-builder --chown=appuser:nodejs /app/apps/front/.next/standalone ./frontend
 COPY --from=frontend-builder --chown=appuser:nodejs /app/apps/front/.next/static ./frontend/.next/static
 COPY --from=frontend-builder --chown=appuser:nodejs /app/apps/front/public ./frontend/public
@@ -54,7 +54,9 @@ COPY --chown=appuser:nodejs .env* ./
 
 # 시작 스크립트 생성
 RUN echo '#!/bin/sh' > /app/start.sh && \
-    echo 'cd /app/api && node main.js &' >> /app/start.sh && \
+    echo 'echo "Starting API server..."' >> /app/start.sh && \
+    echo 'cd /app/api && NODE_PATH=/app/api/node_modules/.pnpm/node_modules:/app/api/node_modules node main.js &' >> /app/start.sh && \
+    echo 'echo "Starting Frontend server..."' >> /app/start.sh && \
     echo 'cd /app/frontend && node server.js &' >> /app/start.sh && \
     echo 'wait' >> /app/start.sh && \
     chmod +x /app/start.sh
