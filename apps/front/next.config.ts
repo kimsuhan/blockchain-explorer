@@ -1,9 +1,24 @@
 import { config } from "dotenv";
 import type { NextConfig } from "next";
 import { resolve } from "path";
+import { existsSync } from "fs";
 
-// 루트 .env 파일 로드
-config({ path: resolve(__dirname, "../../.env") });
+// 루트 .env 파일 로드 (Docker와 로컬 환경 모두 지원)
+const envPaths = [
+  resolve(__dirname, "../../.env"),     // 로컬 개발환경
+  resolve(process.cwd(), ".env"),       // Docker 루트 경로
+  "/app/.env"                           // Docker 절대 경로
+];
+
+for (const envPath of envPaths) {
+  if (existsSync(envPath)) {
+    const result = config({ path: envPath });
+    if (result.parsed) {
+      console.log(`✅ Environment loaded from: ${envPath}`);
+      break;
+    }
+  }
+}
 
 const nextConfig: NextConfig = {
   // 환경변수 설정

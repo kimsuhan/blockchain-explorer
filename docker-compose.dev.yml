@@ -16,6 +16,11 @@ services:
     environment:
       - NODE_ENV=development
       - API_URL=http://api:4000
+      - RPC_URL=${RPC_URL:-http://forlong.io:8545}
+      - CHAIN_ID=${CHAIN_ID:-31337}
+      - DEFAULT_ACCOUNTS=${DEFAULT_ACCOUNTS:-}
+    env_file:
+      - .env
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
 
@@ -34,6 +39,12 @@ services:
       - /app/apps/api/dist
     environment:
       - NODE_ENV=development
+      - API_PORT=${API_PORT:-4000}
+      - RPC_URL=${RPC_URL:-http://forlong.io:8545}
+      - CHAIN_ID=${CHAIN_ID:-31337}
+      - DEFAULT_ACCOUNTS=${DEFAULT_ACCOUNTS:-}
+    env_file:
+      - .env
     ports:
       - "${API_PORT:-4000}:4000"
 # 사용법:

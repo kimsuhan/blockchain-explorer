@@ -58,6 +58,9 @@ WORKDIR /app
 # 환경변수 복사
 COPY --chown=appuser:nodejs .env* ./
 
+# 환경변수를 컨테이너 환경에 설정
+ENV NODE_ENV=production
+
 # 시작 스크립트 생성
 RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'echo "Starting API server..."' >> /app/start.sh && \
