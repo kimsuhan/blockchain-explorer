@@ -1,5 +1,5 @@
 # 전체 스택을 하나의 이미지로 빌드하는 다단계 Dockerfile
-FROM node:18-alpine AS base
+FROM node:22 AS base
 RUN apk add --no-cache libc6-compat
 RUN npm install -g pnpm
 
