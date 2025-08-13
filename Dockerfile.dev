@@ -1,0 +1,29 @@
+# 개발환경용 Dockerfile
+FROM node:18-alpine
+
+# 필수 패키지 설치
+RUN apk add --no-cache libc6-compat curl
+
+# pnpm 설치
+RUN npm install -g pnpm
+
+WORKDIR /app
+
+# 의존성 파일들 복사
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
+COPY apps/front/package*.json ./apps/front/
+COPY apps/api/package*.json ./apps/api/
+
+# 의존성 설치
+RUN pnpm install
+
+# 환경변수 복사
+COPY .env* ./
+
+# 소스 코드는 볼륨으로 마운트됨
+
+# 포트 노출
+EXPOSE 3000 4000
+
+# 개발 서버 시작 (명령어는 docker-compose.dev.yml에서 오버라이드됨)
+CMD ["sh", "-c", "echo 'Development container started'"]

@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
     CHAIN_ID: process.env.CHAIN_ID || "1337",
     DEFAULT_ACCOUNTS: process.env.DEFAULT_ACCOUNTS || "",
   },
+  // Docker standalone 배포를 위한 설정
+  output: 'standalone',
 };
 
 export default nextConfig;

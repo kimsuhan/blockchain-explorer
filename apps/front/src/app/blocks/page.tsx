@@ -331,7 +331,7 @@ export default function BlocksPage() {
         </h3>
         <ul className="text-sm text-blue-700 space-y-1">
           <li>• 블록 번호를 클릭하면 해당 블록의 상세 정보를 볼 수 있습니다</li>
-          <li>• 가스 사용량은 "사용된 가스 / 가스 한도" 형태로 표시됩니다</li>
+          <li>• 가스 사용량은 &quot;사용된 가스 / 가스 한도&quot; 형태로 표시됩니다</li>
           <li>• 마우스를 올리면 전체 해시와 주소를 확인할 수 있습니다</li>
           <li>• 페이지는 최신 블록부터 오래된 블록 순으로 정렬됩니다</li>
         </ul>

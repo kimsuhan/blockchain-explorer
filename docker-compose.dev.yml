@@ -1,0 +1,44 @@
+version: '3.8'
+
+# 개발환경용 Docker Compose 오버라이드
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: sh -c "cd /app/apps/front && pnpm dev"
+    volumes:
+      - ./apps/front:/app/apps/front
+      - ./package.json:/app/package.json
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+      - ./.env:/app/.env
+      - /app/node_modules
+      - /app/apps/front/node_modules
+      - /app/apps/front/.next
+    environment:
+      - NODE_ENV=development
+      - API_URL=http://api:4000
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: sh -c "cd /app/apps/api && pnpm start:dev"
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./package.json:/app/package.json
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+      - ./.env:/app/.env
+      - /app/node_modules
+      - /app/apps/api/node_modules
+      - /app/apps/api/dist
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "${API_PORT:-4000}:4000"
+
+# 사용법:
+# 개발환경: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# 프로덕션: docker-compose up

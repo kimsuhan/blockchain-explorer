@@ -232,3 +232,73 @@ DEFAULT_ACCOUNTS=0x주소1,0x주소2,0x주소3
 - 개발 환경에서는 자동 새로고침으로 데이터 업데이트
 - 패키지 의존성 변경 후에는 루트에서 `pnpm install` 재실행
 - Turborepo 캐시 문제 시 `pnpm clean` 후 다시 빌드
+
+## Docker 배포
+
+이 프로젝트는 Docker를 통한 컨테이너 배포를 지원합니다.
+
+### Docker 배포 옵션
+
+#### 1. Docker Compose를 통한 개별 서비스 배포 (추천)
+```bash
+# 프로덕션 환경
+pnpm docker:compose:prod
+
+# 개발 환경 (Hot Reload 지원)
+pnpm docker:compose:dev
+
+# 수동 실행
+docker-compose up --build                    # 프로덕션
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up  # 개발
+```
+
+#### 2. 단일 이미지 배포
+```bash
+# 단일 이미지 빌드 및 실행
+pnpm docker:build
+pnpm docker:run
+
+# 수동 실행
+docker build -t blockchain-explorer .
+docker run -p 3000:3000 -p 4000:4000 blockchain-explorer
+```
+
+### Docker 빌드 스크립트 사용법
+```bash
+# 편리한 스크립트 사용
+./scripts/docker-build.sh build          # 단일 이미지 빌드
+./scripts/docker-build.sh compose        # Docker Compose 프로덕션
+./scripts/docker-build.sh dev           # Docker Compose 개발환경
+./scripts/docker-build.sh stop          # 컨테이너 중지
+./scripts/docker-build.sh clean         # 이미지 정리
+```
+
+### 환경변수 설정
+Docker 배포 시 `.env` 파일의 환경변수들이 자동으로 컨테이너에 전달됩니다:
+- `RPC_URL`: 테스트넷 RPC 엔드포인트
+- `CHAIN_ID`: 블록체인 네트워크 ID  
+- `FRONTEND_PORT`: 프론트엔드 포트 (기본값: 3000)
+- `API_PORT`: API 서버 포트 (기본값: 4000)
+
+### Docker 이미지 구조
+```
+blockchain-explorer/
+├── Dockerfile                    # 전체 스택 단일 이미지
+├── docker-compose.yml           # 프로덕션 환경 구성
+├── docker-compose.dev.yml       # 개발 환경 오버라이드
+├── apps/front/Dockerfile        # 프론트엔드 개별 이미지
+├── apps/api/Dockerfile          # API 서버 개별 이미지
+└── scripts/docker-build.sh      # 빌드 스크립트
+```
+
+### 배포 포트
+- **Frontend**: http://localhost:3000
+- **API**: http://localhost:4000
+- **Internal Communication**: Frontend → API (http://api:4000)
+
+### Docker 관련 주의사항
+- **빌드 시간**: 첫 빌드 시 의존성 설치로 인해 시간이 걸릴 수 있음
+- **이미지 크기**: 멀티스테이지 빌드로 최적화됨
+- **네트워크**: Docker Compose 사용 시 자동으로 내부 네트워크 구성
+- **볼륨**: 개발 환경에서는 소스 코드 변경 시 자동 반영
+- **환경변수**: 컨테이너 실행 시 `.env` 파일 필요

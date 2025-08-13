@@ -2,11 +2,11 @@
   "name": "blockchain-explorer",
   "version": "0.0.0",
   "private": true,
-  "description": "Hardhat 로컬 네트워크를 위한 블록체인 탐색기",
+  "description": "테스트넷을 위한 블록체인 탐색기",
   "keywords": [
     "blockchain",
     "explorer",
-    "hardhat",
+    "testnet",
     "ethereum",
     "web3"
   ],
@@ -29,8 +29,14 @@
     "api:dev": "pnpm --filter @blockchain-explorer/api dev",
     "api:build": "pnpm --filter @blockchain-explorer/api build",
     "api:start": "pnpm --filter @blockchain-explorer/api start:prod",
-    "node": "cd packages/hardhat && npx hardhat node",
-    "compile": "cd packages/hardhat && npx hardhat compile"
+    "docker:build": "docker build -t blockchain-explorer .",
+    "docker:build:prod": "docker build -t blockchain-explorer:latest .",
+    "docker:run": "docker run -p 3000:3000 -p 4000:4000 blockchain-explorer",
+    "docker:compose:up": "docker-compose up",
+    "docker:compose:up:build": "docker-compose up --build",
+    "docker:compose:down": "docker-compose down",
+    "docker:compose:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
+    "docker:compose:prod": "docker-compose -f docker-compose.yml up --build"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.0",
