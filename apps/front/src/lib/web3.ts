@@ -1,11 +1,27 @@
 // Web3 연결을 위한 유틸리티 파일
 import { ethers } from "ethers";
 
-// Hardhat 로컬 노드 연결 설정
+// 노드 연결 설정
 export const LOCAL_RPC_URL = process.env.RPC_URL || "http://forlong.io:8545";
 
-// 이더리움 프로바이더 설정 (로컬 Hardhat 노드에 연결)
+// 이더리움 프로바이더 설정 (노드에 연결)
 export const provider = new ethers.JsonRpcProvider(LOCAL_RPC_URL);
+
+// 기본 계정들 가져오기
+export const getDefaultAccounts = (): string[] => {
+  const accountsString = process.env.DEFAULT_ACCOUNTS;
+  console.log('DEFAULT_ACCOUNTS 환경변수:', accountsString);
+  console.log('RPC_URL 환경변수 (비교용):', process.env.RPC_URL);
+  
+  if (!accountsString) {
+    console.warn('DEFAULT_ACCOUNTS 환경변수가 설정되지 않았습니다.');
+    return [];
+  }
+  
+  const accounts = accountsString.split(',').map(addr => addr.trim());
+  console.log('파싱된 계정들:', accounts);
+  return accounts;
+};
 
 // 블록 정보 타입 정의
 export interface BlockInfo {
@@ -32,6 +48,7 @@ export interface TransactionInfo {
   status?: number;
 }
 
+
 // 최신 블록 정보 가져오기
 export async function getLatestBlock(): Promise<BlockInfo | null> {
   try {
@@ -55,9 +72,7 @@ export async function getLatestBlock(): Promise<BlockInfo | null> {
 }
 
 // 특정 블록 정보 가져오기 (블록 번호로 조회)
-export async function getBlockByNumber(
-  blockNumber: number
-): Promise<BlockInfo | null> {
+export async function getBlockByNumber(blockNumber: number): Promise<BlockInfo | null> {
   try {
     const block = await provider.getBlock(blockNumber, true);
     if (!block) return null;
@@ -79,9 +94,7 @@ export async function getBlockByNumber(
 }
 
 // 최근 블록들 가져오기 (개수 지정)
-export async function getRecentBlocks(
-  count: number = 10
-): Promise<BlockInfo[]> {
+export async function getRecentBlocks(count: number = 10): Promise<BlockInfo[]> {
   try {
     const latestBlockNumber = await provider.getBlockNumber();
     const blocks: BlockInfo[] = [];
@@ -105,9 +118,7 @@ export async function getRecentBlocks(
 }
 
 // 트랜잭션 정보 가져오기
-export async function getTransactionByHash(
-  txHash: string
-): Promise<TransactionInfo | null> {
+export async function getTransactionByHash(txHash: string): Promise<TransactionInfo | null> {
   try {
     const tx = await provider.getTransaction(txHash);
     const receipt = await provider.getTransactionReceipt(txHash);
@@ -139,9 +150,7 @@ export async function getTransactionByHash(
 }
 
 // 계정 잔액 조회
-export async function getAccountBalance(
-  address: string
-): Promise<string | null> {
+export async function getAccountBalance(address: string): Promise<string | null> {
   try {
     const balance = await provider.getBalance(address);
     return ethers.formatEther(balance);
@@ -152,9 +161,7 @@ export async function getAccountBalance(
 }
 
 // 특정 블록의 모든 트랜잭션 가져오기
-export async function getTransactionsFromBlock(
-  blockNumber: number
-): Promise<TransactionInfo[]> {
+export async function getTransactionsFromBlock(blockNumber: number): Promise<TransactionInfo[]> {
   try {
     const block = await provider.getBlock(blockNumber, true);
     if (!block || !block.transactions) return [];

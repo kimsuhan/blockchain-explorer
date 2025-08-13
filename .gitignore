@@ -77,16 +77,7 @@ jspm_packages/
 .dynamodb/
 
 # TernJS port file
-.tern-port
-
-# Hardhat files
-artifacts/
-cache/
-typechain-types/
-
-# Hardhat Ignition default folder for deployments against a local node
-ignition/deployments/chain-31337
-
+.tern-production
 # IDEs and editors
 .idea/
 .vscode/
