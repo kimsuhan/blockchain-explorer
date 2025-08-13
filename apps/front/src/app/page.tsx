@@ -44,7 +44,7 @@ export default function Dashboard() {
       
     } catch (err) {
       console.error('대시보드 데이터 로딩 실패:', err);
-      setError('데이터를 불러오는데 실패했습니다. Hardhat 노드가 실행 중인지 확인해주세요.');
+      setError('데이터를 불러오는데 실패했습니다. 테스트넷 연결 상태를 확인해주세요.');
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +90,7 @@ export default function Dashboard() {
           <span>블록체인 대시보드</span>
         </h1>
         <p className="text-gray-600">
-          Hardhat 로컬 네트워크의 실시간 정보를 확인하세요
+          테스트넷의 실시간 정보를 확인하세요
         </p>
       </div>
 

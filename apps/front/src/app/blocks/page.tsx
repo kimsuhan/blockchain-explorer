@@ -1,12 +1,12 @@
 // 블록 목록 페이지 - 모든 블록을 페이지네이션과 함께 표시
-'use client';
+"use client";
 
-import ErrorMessage from '@/components/ErrorMessage';
-import LoadingSpinner from '@/components/LoadingSpinner';
-import { BlockInfo, provider } from '@/lib/web3';
-import { Lightbulb, RefreshCw, Square } from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import ErrorMessage from "@/components/ErrorMessage";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { BlockInfo, provider } from "@/lib/web3";
+import { Blocks, Lightbulb, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function BlocksPage() {
   // 상태 관리
@@ -15,7 +15,7 @@ export default function BlocksPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalBlocks, setTotalBlocks] = useState<number>(0);
-  
+
   // 페이지당 표시할 블록 수
   const BLOCKS_PER_PAGE = 20;
 
@@ -30,9 +30,9 @@ export default function BlocksPage() {
       setTotalBlocks(latestBlockNumber + 1); // 블록 번호는 0부터 시작
 
       // 현재 페이지에 해당하는 블록들 계산
-      const startBlock = Math.max(0, latestBlockNumber - ((page - 1) * BLOCKS_PER_PAGE));
+      const startBlock = Math.max(0, latestBlockNumber - (page - 1) * BLOCKS_PER_PAGE);
       const blocksToFetch = Math.min(BLOCKS_PER_PAGE, startBlock + 1);
-      
+
       const blockPromises = [];
       for (let i = 0; i < blocksToFetch; i++) {
         const blockNumber = startBlock - i;
@@ -42,13 +42,13 @@ export default function BlocksPage() {
       }
 
       const blockResults = await Promise.all(blockPromises);
-      
+
       // 블록 정보를 우리 형식으로 변환
       const formattedBlocks: BlockInfo[] = blockResults
-        .filter(block => block !== null)
-        .map(block => ({
+        .filter((block) => block !== null)
+        .map((block) => ({
           number: block!.number,
-          hash: block!.hash ?? '',
+          hash: block!.hash ?? "",
           timestamp: block!.timestamp,
           transactionCount: block!.transactions.length,
           gasUsed: block!.gasUsed.toString(),
@@ -59,8 +59,8 @@ export default function BlocksPage() {
 
       setBlocks(formattedBlocks);
     } catch (err) {
-      console.error('블록 데이터 로딩 실패:', err);
-      setError('블록 데이터를 불러오는데 실패했습니다. Hardhat 노드가 실행 중인지 확인해주세요.');
+      console.error("블록 데이터 로딩 실패:", err);
+      setError("블록 데이터를 불러오는데 실패했습니다. 테스트넷 연결 상태를 확인해주세요.");
     } finally {
       setIsLoading(false);
     }
@@ -81,7 +81,7 @@ export default function BlocksPage() {
 
   // 시간을 읽기 쉬운 형태로 변환
   const formatTime = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleString('ko-KR');
+    return new Date(timestamp * 1000).toLocaleString("ko-KR");
   };
 
   // 해시를 짧게 표시 (처음 10자 + ... + 마지막 10자)
@@ -111,7 +111,7 @@ export default function BlocksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-800 flex items-center">
-            <Square className="w-6 h-6 mr-2" />
+            <Blocks className="w-6 h-6 mr-2" />
             블록 목록
           </h1>
           <p className="text-gray-600 mt-2">
@@ -160,7 +160,7 @@ export default function BlocksPage() {
                 <tr key={block.number} className="hover:bg-gray-50 transition-colors">
                   {/* 블록 번호 (클릭하면 상세 페이지로) */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Link 
+                    <Link
                       href={`/blocks/${block.number}`}
                       className="text-blue-600 hover:text-blue-800 font-medium text-lg"
                     >
@@ -170,7 +170,7 @@ export default function BlocksPage() {
 
                   {/* 블록 해시 */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">
-                    <span 
+                    <span
                       className="cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
                       title={`전체 해시: ${block.hash}`}
                     >
@@ -189,7 +189,7 @@ export default function BlocksPage() {
 
                   {/* 마이너 */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">
-                    <span 
+                    <span
                       className="cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
                       title={`마이너 주소: ${block.miner}`}
                     >
@@ -201,9 +201,7 @@ export default function BlocksPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div className="text-right">
                       <div className="font-medium">{formatNumber(block.gasUsed)}</div>
-                      <div className="text-xs text-gray-500">
-                        / {formatNumber(block.gasLimit)}
-                      </div>
+                      <div className="text-xs text-gray-500">/ {formatNumber(block.gasLimit)}</div>
                     </div>
                   </td>
 
@@ -237,11 +235,12 @@ export default function BlocksPage() {
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              총 {totalBlocks.toLocaleString()}개 블록 중{' '}
+              총 {totalBlocks.toLocaleString()}개 블록 중{" "}
               <span className="font-medium">
-                {((currentPage - 1) * BLOCKS_PER_PAGE) + 1}-
+                {(currentPage - 1) * BLOCKS_PER_PAGE + 1}-
                 {Math.min(currentPage * BLOCKS_PER_PAGE, totalBlocks)}
-              </span>번째 표시
+              </span>
+              번째 표시
             </div>
 
             <div className="flex items-center space-x-2">
@@ -251,8 +250,8 @@ export default function BlocksPage() {
                 disabled={currentPage === 1}
                 className={`px-3 py-2 rounded-md text-sm font-medium ${
                   currentPage === 1
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 이전
@@ -277,15 +276,15 @@ export default function BlocksPage() {
                 {Array.from({ length: 5 }, (_, i) => {
                   const pageNum = currentPage - 2 + i;
                   if (pageNum < 1 || pageNum > totalPages) return null;
-                  
+
                   return (
                     <button
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
                       className={`px-3 py-2 rounded-md text-sm font-medium ${
                         pageNum === currentPage
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                          ? "bg-blue-600 text-white"
+                          : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                       }`}
                     >
                       {pageNum}
@@ -313,8 +312,8 @@ export default function BlocksPage() {
                 disabled={currentPage === totalPages}
                 className={`px-3 py-2 rounded-md text-sm font-medium ${
                   currentPage === totalPages
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 다음

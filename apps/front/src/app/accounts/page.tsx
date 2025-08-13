@@ -95,7 +95,7 @@ export default function AccountsPage() {
     return `${address.slice(0, 10)}...${address.slice(-8)}`;
   };
 
-  // Hardhat 기본 계정들 (테스트용)
+  // 기본 테스트 계정들
   const defaultAccounts = getDefaultAccounts();
 
   return (
@@ -159,11 +159,11 @@ export default function AccountsPage() {
             </div>
           )}
 
-          {/* Hardhat 기본 계정들 */}
+          {/* 기본 테스트 계정들 */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
               <Lightbulb className="w-5 h-5 mr-2" />
-              Hardhat 기본 테스트 계정들
+              기본 테스트 계정들
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {defaultAccounts.map((address, index) => (
@@ -370,7 +370,7 @@ export default function AccountsPage() {
             <h4 className="font-medium mb-2">검색 방법:</h4>
             <ul className="space-y-1">
               <li>• 0x로 시작하는 42자리 이더리움 주소를 입력하세요</li>
-              <li>• Hardhat 기본 계정들을 클릭해서 테스트해보세요</li>
+              <li>• 기본 테스트 계정들을 클릭해서 테스트해보세요</li>
               <li>• 최근 검색한 주소들은 자동으로 저장됩니다</li>
             </ul>
           </div>

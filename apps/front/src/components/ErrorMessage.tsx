@@ -32,11 +32,12 @@ export default function ErrorMessage({ message, onRetry }: ErrorMessageProps) {
       <div className="mt-4 text-sm text-gray-600">
         <p className="flex items-center justify-center space-x-1">
           <Lightbulb className="w-4 h-4" />
-          <span>팁: Hardhat 로컬 노드가 실행 중인지 확인해보세요.</span>
+          <span>팁: 테스트넷 RPC URL과 네트워크 연결 상태를 확인해보세요.</span>
         </p>
-        <code className="bg-gray-100 px-2 py-1 rounded text-xs">
-          npm run node
-        </code>
+        <div className="mt-2 space-y-1">
+          <div>RPC URL: <code className="bg-gray-100 px-2 py-1 rounded text-xs">{process.env.RPC_URL}</code></div>
+          <div>Chain ID: <code className="bg-gray-100 px-2 py-1 rounded text-xs">{process.env.CHAIN_ID}</code></div>
+        </div>
       </div>
     </div>
   );

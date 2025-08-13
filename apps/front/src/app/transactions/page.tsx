@@ -57,7 +57,7 @@ export default function TransactionsPage() {
 
     } catch (err) {
       console.error('트랜잭션 데이터 로딩 실패:', err);
-      setError('트랜잭션 데이터를 불러오는데 실패했습니다. Hardhat 노드가 실행 중인지 확인해주세요.');
+      setError('트랜잭션 데이터를 불러오는데 실패했습니다. 테스트넷 연결 상태를 확인해주세요.');
     } finally {
       setIsLoading(false);
     }

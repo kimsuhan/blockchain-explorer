@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-이 프로젝트는 Hardhat 로컬 네트워크를 위한 블록체인 탐색기입니다. pnpm + Turborepo + Changesets를 사용하는 모노레포 구조로 구성되어 있습니다.
+이 프로젝트는 테스트넷을 위한 블록체인 탐색기입니다. pnpm + Turborepo + Changesets를 사용하는 모노레포 구조로 구성되어 있습니다.
 
 ## 개발 명령어
 
@@ -66,13 +66,15 @@ pnpm api:build
 pnpm api:start
 ```
 
-### 블록체인 네트워크 (Hardhat)
+### 블록체인 네트워크 설정
 ```bash
-# Hardhat 로컬 노드 실행
-pnpm node
+# 환경변수에서 RPC URL 설정
+# .env 파일에서 RPC_URL과 CHAIN_ID 수정
 
-# 스마트 컨트랙트 컴파일
-pnpm compile
+# 예시 테스트넷들:
+# - Sepolia: https://sepolia.infura.io/v3/YOUR_KEY
+# - Goerli: https://goerli.infura.io/v3/YOUR_KEY  
+# - 커스텀: http://forlong.io:8545
 ```
 
 ## 프로젝트 구조
@@ -105,7 +107,6 @@ blockchain-explorer/                   # 모노레포 루트
 │       │       └── web3.ts           # Web3 유틸리티 함수들
 │       └── package.json
 ├── packages/                         # 공유 패키지들 (향후 구현 예정)
-│   └── hardhat/                      # Hardhat 설정 및 스마트 컨트랙트
 ├── .changeset/                       # Changesets 설정
 │   └── config.json
 ├── package.json                      # 루트 패키지 설정
@@ -123,13 +124,14 @@ blockchain-explorer/                   # 모노레포 루트
 - **블록체인 상호작용**: ethers.js v6
 - **아이콘**: Lucide React
 - **테스팅**: Jest, Supertest
-- **대상 네트워크**: Hardhat Local Network (localhost:8545)
+- **대상 네트워크**: 이더리움 테스트넷 (Sepolia, Goerli 등) 및 커스텀 네트워크
 
 ## 아키텍처 세부사항
 
 ### Web3 연결 (src/lib/web3.ts)
-- `provider`: ethers.js JsonRpcProvider로 블록체인과 연결
-- RPC URL은 `LOCAL_RPC_URL` 상수로 관리 (현재 `http://forlong.io:8545` 사용)
+- `provider`: ethers.js JsonRpcProvider로 테스트넷과 연결
+- RPC URL은 환경변수 `RPC_URL`로 관리 (기본값: `http://forlong.io:8545`)
+- 다양한 테스트넷 지원 (Sepolia, Goerli, 커스텀 네트워크 등)
 - 모든 Web3 관련 유틸리티 함수들이 정의됨
 
 ### 주요 유틸리티 함수들
@@ -187,11 +189,11 @@ blockchain-explorer/                   # 모노레포 루트
 - 기존 컴포넌트의 스타일 패턴 따르기
 - 반응형 디자인 고려 (`md:`, `lg:` 등의 prefix 사용)
 
-### 테스트 계정
-프로젝트에서 사용하는 Hardhat 기본 테스트 계정들:
-- Account 0: `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266`
-- Account 1: `0x70997970C51812dc3A010C7d01b50e0d17dc79C8`
-- Account 2: `0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC`
+### 테스트 계정 설정
+환경변수 `DEFAULT_ACCOUNTS`에서 기본 계정들을 설정할 수 있습니다:
+- `.env` 파일에서 `DEFAULT_ACCOUNTS`에 쉼표로 구분된 주소들 설정
+- 테스트넷에서 사용할 계정들의 주소를 등록
+- `getDefaultAccounts()` 함수로 설정된 계정들 조회 가능
 
 ## 환경변수 설정
 
@@ -201,10 +203,18 @@ blockchain-explorer/                   # 모노레포 루트
 # .env 파일 예시
 FRONTEND_PORT=3000
 API_PORT=4000
+
+# 테스트넷 설정
 RPC_URL=http://forlong.io:8545
 CHAIN_ID=31337
+
+# 또는 다른 테스트넷 사용 시:
+# RPC_URL=https://sepolia.infura.io/v3/YOUR_INFURA_KEY
+# CHAIN_ID=11155111
+
 API_URL=http://localhost:4000
 NODE_ENV=development
+DEFAULT_ACCOUNTS=0x주소1,0x주소2,0x주소3
 ```
 
 ### 환경변수 사용법:
@@ -214,8 +224,10 @@ NODE_ENV=development
 
 ## 주의사항
 
-- Hardhat 로컬 노드가 실행 중이어야 정상 작동
-- 환경변수 변경 시 서버 재시작 필요
+- **테스트넷 연결**: 설정된 RPC URL의 테스트넷이 정상 작동해야 함
+- **네트워크 설정**: CHAIN_ID가 연결할 테스트넷과 일치해야 함
+- **환경변수**: 변경 시 서버 재시작 필요
+- **RPC 제한**: 공용 RPC의 경우 요청 제한이 있을 수 있음
 - 모든 블록체인 상호작용은 비동기 처리되며 에러 핸들링 포함
 - 개발 환경에서는 자동 새로고침으로 데이터 업데이트
 - 패키지 의존성 변경 후에는 루트에서 `pnpm install` 재실행

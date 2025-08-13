@@ -2,7 +2,7 @@
 "use client";
 
 import { checkNetworkConnection } from "@/lib/web3";
-import { BarChart3, CreditCard, Search, Square, User } from "lucide-react";
+import { BarChart3, Blocks, CreditCard, Search, User } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -64,7 +64,7 @@ export default function Header() {
             {/* 네트워크 정보 */}
             <div className="text-sm text-blue-200">
               <div>RPC: {process.env.RPC_URL}</div>
-              <div>Chain ID: 31337</div>
+              <div>Chain ID: {process.env.CHAIN_ID}</div>
             </div>
           </div>
         </div>
@@ -83,7 +83,7 @@ export default function Header() {
               href="/blocks"
               className="hover:text-blue-200 transition-colors font-medium flex items-center space-x-1"
             >
-              <Square className="w-4 h-4" />
+              <Blocks className="w-4 h-4" />
               <span>블록</span>
             </Link>
             <Link
