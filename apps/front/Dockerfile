@@ -53,6 +53,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/front/.next/static ./.next/s
 # 환경변수 파일 복사
 COPY --from=builder /app/.env* ./
 
+# Standalone을 위한 필수 모듈 설치 (npm 사용으로 심볼릭 링크 문제 해결)
+COPY --from=builder --chown=nextjs:nodejs /app/apps/front/package.json ./package.json
+RUN npm install --production --no-package-lock next react react-dom
+
 USER nextjs
 
 EXPOSE 3000

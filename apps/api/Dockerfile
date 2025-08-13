@@ -30,7 +30,7 @@ COPY .env* ./
 # Install pnpm
 RUN npm install -g pnpm
 
-# Build the application
+# Build the application with webpack bundling
 WORKDIR /app/apps/api
 RUN pnpm build
 
@@ -44,12 +44,13 @@ ENV NODE_ENV production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nestjs
 
-# Copy the built application and dependencies
+# Copy the built application (webpack bundled)
 COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./dist
-COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nestjs:nodejs /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/apps/api/package.json ./package.json
 COPY --from=builder --chown=nestjs:nodejs /app/.env* ./
+
+# Webpack 번들링으로 모든 의존성이 포함되어 있지만, 안전을 위해 runtime dependencies만 설치
+RUN npm install --production --only=production --no-package-lock
 
 USER nestjs
 
