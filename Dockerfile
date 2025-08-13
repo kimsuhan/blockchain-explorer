@@ -44,10 +44,16 @@ COPY --from=api-builder --chown=appuser:nodejs /app/apps/api/dist ./api
 COPY --from=api-builder --chown=appuser:nodejs /app/node_modules ./api/node_modules
 COPY --from=api-builder --chown=appuser:nodejs /app/apps/api/package.json ./api/
 
-# Frontend 파일들 복사 (standalone 빌드의 모든 필요한 파일들)
+# Frontend 파일들 복사 (standalone 빌드)
 COPY --from=frontend-builder --chown=appuser:nodejs /app/apps/front/.next/standalone ./frontend
-COPY --from=frontend-builder --chown=appuser:nodejs /app/apps/front/.next/static ./frontend/.next/static
+COPY --from=frontend-builder --chown=appuser:nodejs /app/apps/front/.next/static ./frontend/.next/static  
 COPY --from=frontend-builder --chown=appuser:nodejs /app/apps/front/public ./frontend/public
+
+# Standalone을 위한 필수 모듈 설치 (npm 사용으로 심볼릭 링크 문제 해결)
+WORKDIR /app/frontend
+COPY --from=frontend-builder --chown=appuser:nodejs /app/apps/front/package.json ./package.json
+RUN npm install --production --no-package-lock next react react-dom
+WORKDIR /app
 
 # 환경변수 복사
 COPY --chown=appuser:nodejs .env* ./
