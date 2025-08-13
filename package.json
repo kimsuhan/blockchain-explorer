@@ -1,0 +1,41 @@
+{
+  "name": "blockchain-explorer",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Hardhat 로컬 네트워크를 위한 블록체인 탐색기",
+  "keywords": [
+    "blockchain",
+    "explorer",
+    "hardhat",
+    "ethereum",
+    "web3"
+  ],
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "lint:fix": "turbo lint:fix",
+    "type-check": "turbo type-check",
+    "clean": "turbo clean",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
+    "changeset": "changeset",
+    "changeset:version": "changeset version",
+    "changeset:publish": "changeset publish",
+    "node": "cd packages/hardhat && npx hardhat node",
+    "compile": "cd packages/hardhat && npx hardhat compile"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^0.5.0",
+    "@changesets/cli": "^2.27.10",
+    "@types/node": "^20.17.10",
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.4",
+    "typescript": "^5.7.3"
+  },
+  "packageManager": "pnpm@9.15.2",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

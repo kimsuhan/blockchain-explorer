@@ -1,0 +1,53 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "dist/**",
+        "artifacts/**",
+        "cache/**"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "dependsOn": ["^build"]
+    },
+    "lint:fix": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "type-check": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**/*.tsbuildinfo"]
+    },
+    "clean": {
+      "cache": false
+    },
+    "compile": {
+      "dependsOn": ["^build"],
+      "outputs": [
+        "artifacts/**",
+        "cache/**",
+        "typechain-types/**"
+      ]
+    },
+    "test": {
+      "dependsOn": ["^build", "compile"],
+      "outputs": []
+    }
+  },
+  "globalDependencies": [
+    "**/.env.*local",
+    "tsconfig.json",
+    "tailwind.config.*",
+    "next.config.*",
+    "hardhat.config.*"
+  ]
+}
