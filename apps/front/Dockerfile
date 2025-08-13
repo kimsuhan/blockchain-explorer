@@ -45,8 +45,13 @@ RUN adduser --system --uid 1001 nextjs
 
 # Copy the built application
 COPY --from=builder /app/apps/front/public ./public
+
+# Standalone 빌드의 경우, 필요한 파일들을 올바른 위치에 복사
 COPY --from=builder --chown=nextjs:nodejs /app/apps/front/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/front/.next/static ./.next/static
+
+# 환경변수 파일 복사
+COPY --from=builder /app/.env* ./
 
 USER nextjs
 
@@ -55,4 +60,5 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["node", "server.js"]
+# Standalone 모드에서는 apps/front 디렉토리 안의 server.js를 실행
+CMD ["node", "apps/front/server.js"]
