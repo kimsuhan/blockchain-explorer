@@ -36,6 +36,8 @@ show_usage() {
     echo "  compose      Docker Compose로 개별 서비스 빌드 및 실행"
     echo "  dev          개발 환경으로 실행"
     echo "  prod         프로덕션 환경으로 실행"
+    echo "  update       기존 서비스 중지 후 새로 빌드하여 실행"
+    echo "  restart      서비스 재시작 (빌드 없이)"
     echo "  stop         모든 컨테이너 중지"
     echo "  clean        모든 이미지와 컨테이너 정리"
     echo ""
@@ -94,6 +96,35 @@ compose_up() {
     fi
 }
 
+# 업데이트 (중지 → 빌드 → 실행)
+update_services() {
+    local env=${1:-prod}
+    
+    log_info "서비스 업데이트 중..."
+    
+    # 기존 컨테이너 중지
+    log_info "기존 컨테이너 중지..."
+    docker-compose down
+    
+    # 새로 빌드하여 실행
+    if [ "$env" = "dev" ]; then
+        log_info "개발 환경으로 업데이트..."
+        docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+    else
+        log_info "프로덕션 환경으로 업데이트..."
+        docker-compose up --build
+    fi
+    
+    log_success "서비스 업데이트 완료"
+}
+
+# 서비스 재시작 (빌드 없이)
+restart_services() {
+    log_info "서비스 재시작 중..."
+    docker-compose restart
+    log_success "서비스 재시작 완료"
+}
+
 # 컨테이너 중지
 stop_containers() {
     log_info "모든 컨테이너 중지 중..."
@@ -143,6 +174,14 @@ main() {
                 command="prod"
                 shift
                 ;;
+            update)
+                command="update"
+                shift
+                ;;
+            restart)
+                command="restart"
+                shift
+                ;;
             stop)
                 command="stop"
                 shift
@@ -189,6 +228,12 @@ main() {
             ;;
         prod)
             compose_up "prod"
+            ;;
+        update)
+            update_services "prod"
+            ;;
+        restart)
+            restart_services
             ;;
         stop)
             stop_containers

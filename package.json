@@ -36,7 +36,9 @@
     "docker:compose:up:build": "docker compose up --build",
     "docker:compose:down": "docker compose down",
     "docker:compose:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
-    "docker:compose:prod": "docker compose -f docker-compose.yml up --build"
+    "docker:compose:prod": "docker compose -f docker-compose.yml up --build",
+    "docker:update": "./scripts/docker-build.sh update",
+    "docker:restart": "./scripts/docker-build.sh restart"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.0",
