@@ -2,10 +2,7 @@
 import { ethers } from "ethers";
 
 // Hardhat 로컬 노드 연결 설정
-// export const LOCAL_RPC_URL = "http://119.28.156.50:8545";
-export const LOCAL_RPC_URL = "http://forlong.io:8545";
-// export const LOCAL_RPC_URL = "https://ily.blockgateway.net/";
-// export const LOCAL_RPC_URL = "https://ethereum.publicnode.com";
+export const LOCAL_RPC_URL = process.env.RPC_URL || "http://forlong.io:8545";
 
 // 이더리움 프로바이더 설정 (로컬 Hardhat 노드에 연결)
 export const provider = new ethers.JsonRpcProvider(LOCAL_RPC_URL);

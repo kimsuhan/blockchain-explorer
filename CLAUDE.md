@@ -44,16 +44,26 @@ pnpm changeset:version
 pnpm changeset:publish
 ```
 
-### 프론트엔드 (apps/front)
+### 개별 앱 실행
 ```bash
 # 프론트엔드만 개발 서버 실행
+pnpm frontend:dev
+# 또는
 pnpm --filter @blockchain-explorer/frontend dev
 
-# 프론트엔드만 빌드
-pnpm --filter @blockchain-explorer/frontend build
+# API 서버만 개발 실행
+pnpm api:dev
+# 또는
+pnpm --filter @blockchain-explorer/api dev
 
-# 프론트엔드만 린트
-pnpm --filter @blockchain-explorer/frontend lint
+# 프론트엔드만 빌드
+pnpm frontend:build
+
+# API 서버만 빌드
+pnpm api:build
+
+# API 서버 프로덕션 실행
+pnpm api:start
 ```
 
 ### 블록체인 네트워크 (Hardhat)
@@ -70,7 +80,16 @@ pnpm compile
 ```
 blockchain-explorer/                   # 모노레포 루트
 ├── apps/                              # 애플리케이션들
-│   ├── api/                          # API 서버 (향후 구현 예정)
+│   ├── api/                          # NestJS API 서버 (@blockchain-explorer/api)
+│   │   ├── src/
+│   │   │   ├── app.controller.ts     # 메인 컨트롤러
+│   │   │   ├── app.module.ts         # 루트 모듈
+│   │   │   ├── app.service.ts        # 메인 서비스
+│   │   │   └── main.ts               # 앱 진입점
+│   │   ├── test/                     # E2E 테스트
+│   │   ├── nest-cli.json             # NestJS CLI 설정
+│   │   ├── tsconfig.json             # TypeScript 설정
+│   │   └── package.json
 │   └── front/                        # Next.js 프론트엔드 (@blockchain-explorer/frontend)
 │       ├── src/
 │       │   ├── app/                  # Next.js App Router 페이지
@@ -99,9 +118,11 @@ blockchain-explorer/                   # 모노레포 루트
 
 - **모노레포 도구**: pnpm, Turborepo, Changesets
 - **프론트엔드**: Next.js 15, React 19, TypeScript
+- **백엔드**: NestJS 11, TypeScript
 - **스타일링**: Tailwind CSS v4
 - **블록체인 상호작용**: ethers.js v6
 - **아이콘**: Lucide React
+- **테스팅**: Jest, Supertest
 - **대상 네트워크**: Hardhat Local Network (localhost:8545)
 
 ## 아키텍처 세부사항
@@ -172,10 +193,29 @@ blockchain-explorer/                   # 모노레포 루트
 - Account 1: `0x70997970C51812dc3A010C7d01b50e0d17dc79C8`
 - Account 2: `0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC`
 
+## 환경변수 설정
+
+루트 디렉토리의 `.env` 파일에서 모든 환경변수를 관리합니다:
+
+```bash
+# .env 파일 예시
+FRONTEND_PORT=3000
+API_PORT=4000
+RPC_URL=http://forlong.io:8545
+CHAIN_ID=31337
+API_URL=http://localhost:4000
+NODE_ENV=development
+```
+
+### 환경변수 사용법:
+- **API**: `process.env.API_PORT` 등으로 직접 접근
+- **Frontend**: `process.env.RPC_URL` 등으로 접근 (next.config.ts에서 설정)
+- **포트 변경**: `.env`에서 `FRONTEND_PORT`, `API_PORT` 수정
+
 ## 주의사항
 
 - Hardhat 로컬 노드가 실행 중이어야 정상 작동
-- RPC URL 변경 시 `apps/front/src/lib/web3.ts`의 `LOCAL_RPC_URL` 수정 필요
+- 환경변수 변경 시 서버 재시작 필요
 - 모든 블록체인 상호작용은 비동기 처리되며 에러 핸들링 포함
 - 개발 환경에서는 자동 새로고침으로 데이터 업데이트
 - 패키지 의존성 변경 후에는 루트에서 `pnpm install` 재실행
