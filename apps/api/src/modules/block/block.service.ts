@@ -3,7 +3,7 @@ import { CACHE_KEY } from '@/modules/cache/consts/cache-key.const';
 import { RedisCacheService } from '@/modules/cache/redis-cache.service';
 import { EthersService } from '@/modules/ethers/ethers.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { Block } from 'ethers';
+import { Block, TransactionReceipt } from 'ethers';
 
 @Injectable()
 export class BlockService {
@@ -50,12 +50,24 @@ export class BlockService {
    */
   async getBlock(blockNumber: number): Promise<Block | null> {
     const block: Block | null = await this.ethers.jsonProvider.getBlock(blockNumber);
+    if (block && block.transactions.length > 0) {
+      for (const transaction of block.transactions) {
+        const receipt = await this.ethers.jsonProvider.getTransactionReceipt(transaction);
+        this.logger.debug('트랜잭션 정보:', receipt);
+      }
+    }
     return block;
   }
 
+  /**
+   * 블록 정보 조회
+   *
+   * @param blockNumber
+   * @returns
+   */
   async getRedisBlock(blockNumber: number): Promise<Record<string, unknown> | null> {
+    blockNumber -= 1; // 0부터 시작하므로 1 빼줌
     const block: string[] | null = await this.redis.zrange(CACHE_KEY.BLOCK, blockNumber, blockNumber);
-    console.log(blockNumber, block);
     if (block && block.length > 0) {
       return JSON.parse(block[0]) as Record<string, unknown>;
     }
@@ -96,22 +108,6 @@ export class BlockService {
       gasLimit: block.gasLimit.toString(),
       gasUsed: block.gasUsed.toString(),
     });
-
-    // this.logger.debug(`블록 정보: ${blockNumber}`, {
-    //   hash: block.hash,
-    //   timestamp: new Date(block.timestamp * 1000),
-    //   transactions: block.transactions.length,
-    //   gasUsed: block.gasUsed.toString(),
-    // });
-
-    // 트랜잭션 처리
-    // if (block.transactions.length > 0) {
-    //   for (const transaction of block.transactions) {
-    //     const receipt = await this.ethers.jsonProvider.getTransactionReceipt(transaction);
-
-    //     this.logger.debug('트랜잭션 정보:', receipt);
-    //   }
-    // }
   }
 
   /**
@@ -153,6 +149,15 @@ export class BlockService {
 
     // WebSocket으로 새 블록 알림 브로드캐스트
     this.blockGateway.broadcastNewBlock({ ...info, number: blockNumber });
+  }
+
+  /**
+   * 트랜잭션 정보 저장
+   *
+   * @param transaction
+   */
+  async pushTransaction(transaction: TransactionReceipt) {
+    await this.redis.set(CACHE_KEY.TRANSACTION, JSON.stringify(transaction));
   }
 
   /**
