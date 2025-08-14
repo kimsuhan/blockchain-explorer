@@ -1,5 +1,6 @@
 import { BlockService } from '@/modules/block/block.service';
-import { Controller, Get, Logger, Query } from '@nestjs/common';
+import { Controller, Get, Logger, Param, Query } from '@nestjs/common';
+import { Block } from 'ethers';
 
 @Controller('block')
 export class BlockController {
@@ -13,5 +14,17 @@ export class BlockController {
   ): Promise<{ data: string[]; total: number }> {
     this.logger.log('[GET] /block');
     return await this.blockService.getBlocks(limit, offset);
+  }
+
+  @Get('block/:blockNumber')
+  async getBlock(@Param('blockNumber') blockNumber: number): Promise<Block | null> {
+    this.logger.log('[GET] /block/:blockNumber');
+    return await this.blockService.getBlock(Number(blockNumber));
+  }
+
+  @Get('redis/:blockNumber')
+  async getRedisBlock(@Param('blockNumber') blockNumber: number): Promise<Record<string, unknown> | null> {
+    this.logger.log('[GET] /block/redis/:blockNumber');
+    return await this.blockService.getRedisBlock(Number(blockNumber));
   }
 }

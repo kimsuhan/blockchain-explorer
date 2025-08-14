@@ -33,6 +33,13 @@ export interface BlockInfo {
   gasLimit: string;
   miner: string;
   parentHash: string;
+  parentBeaconBlockRoot: string;
+  nonce: string;
+  difficulty: string;
+  stateRoot: string;
+  receiptsRoot: string;
+  blobGasUsed: string;
+  excessBlobGas: string;
 }
 
 // 트랜잭션 정보 타입 정의
@@ -63,6 +70,13 @@ export async function getLatestBlock(): Promise<BlockInfo | null> {
       gasLimit: block.gasLimit.toString(),
       miner: block.miner,
       parentHash: block.parentHash,
+      parentBeaconBlockRoot: block.parentBeaconBlockRoot ?? "",
+      nonce: block.nonce,
+      difficulty: block.difficulty.toString(),
+      stateRoot: block.stateRoot ?? "",
+      receiptsRoot: block.receiptsRoot ?? "",
+      blobGasUsed: block.blobGasUsed?.toString() ?? "",
+      excessBlobGas: block.excessBlobGas?.toString() ?? "",
     };
   } catch (error) {
     console.error("최신 블록 가져오기 실패:", error);
@@ -85,6 +99,13 @@ export async function getBlockByNumber(blockNumber: number): Promise<BlockInfo |
       gasLimit: block.gasLimit.toString(),
       miner: block.miner,
       parentHash: block.parentHash,
+      parentBeaconBlockRoot: block.parentBeaconBlockRoot ?? "",
+      nonce: block.nonce,
+      difficulty: block.difficulty.toString(),
+      stateRoot: block.stateRoot ?? "",
+      receiptsRoot: block.receiptsRoot ?? "",
+      blobGasUsed: block.blobGasUsed?.toString() ?? "",
+      excessBlobGas: block.excessBlobGas?.toString() ?? "",
     };
   } catch (error) {
     console.error(`블록 ${blockNumber} 가져오기 실패:`, error);
@@ -210,18 +231,21 @@ export async function checkNetworkConnection(): Promise<boolean> {
 }
 
 // API에서 블록 정보 가져오기
-export async function getBlocksFromAPI(limit: number = 20, offset: number = 0): Promise<{ blocks: BlockInfo[]; total: number }> {
+export async function getBlocksFromAPI(
+  limit: number = 20,
+  offset: number = 0
+): Promise<{ blocks: BlockInfo[]; total: number }> {
   try {
     const apiUrl = process.env.API_URL || "http://localhost:4000";
     const response = await fetch(`${apiUrl}/block?limit=${limit}&offset=${offset}`);
-    
+
     if (!response.ok) {
       throw new Error(`API 호출 실패: ${response.status}`);
     }
-    
+
     const apiResponse = await response.json();
     const { data: blockStrings, total } = apiResponse;
-    
+
     // JSON 문자열들을 파싱하여 BlockInfo 형태로 변환
     const blocks: BlockInfo[] = blockStrings.map((blockStr: string) => {
       const blockData = JSON.parse(blockStr);
@@ -230,13 +254,20 @@ export async function getBlocksFromAPI(limit: number = 20, offset: number = 0): 
         hash: blockData.hash ?? "",
         timestamp: blockData.timestamp,
         transactionCount: blockData.transactions,
-        gasUsed: "0", // API에서 gasUsed 정보가 없으므로 기본값
-        gasLimit: "0", // API에서 gasLimit 정보가 없으므로 기본값  
+        gasUsed: blockData.gasUsed ?? "", // API에서 gasUsed 정보가 없으므로 기본값
+        gasLimit: blockData.gasLimit ?? "", // API에서 gasLimit 정보가 없으므로 기본값
         miner: blockData.miner ?? "",
-        parentHash: "", // API에서 parentHash 정보가 없으므로 기본값
+        parentHash: blockData.parentHash ?? "", // API에서 parentHash 정보가 없으므로 기본값
+        parentBeaconBlockRoot: blockData.parentBeaconBlockRoot ?? "", // API에서 parentBeaconBlockRoot 정보가 없으므로 기본값
+        nonce: blockData.nonce ?? "", // API에서 nonce 정보가 없으므로 기본값
+        difficulty: blockData.difficulty ?? "", // API에서 difficulty 정보가 없으므로 기본값
+        stateRoot: blockData.stateRoot ?? "", // API에서 stateRoot 정보가 없으므로 기본값
+        receiptsRoot: blockData.receiptsRoot ?? "", // API에서 receiptsRoot 정보가 없으므로 기본값
+        blobGasUsed: blockData.blobGasUsed ?? "", // API에서 blobGasUsed 정보가 없으므로 기본값
+        excessBlobGas: blockData.excessBlobGas ?? "", // API에서 excessBlobGas 정보가 없으므로 기본값
       };
     });
-    
+
     return { blocks, total };
   } catch (error) {
     console.error("API에서 블록 정보 가져오기 실패:", error);

@@ -7,7 +7,7 @@ import { getLatestBlock, getRecentBlocks, provider, BlockInfo } from '@/lib/web3
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import { useSocket } from '@/hooks/useSocket';
-import { Home, Package, RefreshCw, Lightbulb, Wifi, WifiOff } from 'lucide-react';
+import { Home, Package, RefreshCw, Lightbulb } from 'lucide-react';
 
 export default function Dashboard() {
   // 상태 관리 (State Management)
@@ -23,6 +23,10 @@ export default function Dashboard() {
 
   // Socket 연결
   const { isConnected, lastBlock } = useSocket();
+  
+  // 새로 추가된 블록 추적 (애니메이션용)
+  const [newBlockNumbers, setNewBlockNumbers] = useState<Set<number>>(new Set());
+  const [isNewBlock, setIsNewBlock] = useState<boolean>(false);
 
   // 데이터를 불러오는 함수
   const loadData = async () => {
@@ -57,12 +61,6 @@ export default function Dashboard() {
   // 컴포넌트가 처음 렌더링될 때 데이터 로드
   useEffect(() => {
     loadData();
-
-    // 10초마다 자동으로 데이터 새로고침
-    const interval = setInterval(loadData, 10000);
-
-    // 컴포넌트가 언마운트될 때 interval 정리
-    return () => clearInterval(interval);
   }, []);
 
   // 새 블록이 도착했을 때 블록 목록에 추가
@@ -72,6 +70,10 @@ export default function Dashboard() {
       
       // 최신 블록 업데이트
       setLatestBlock(lastBlock);
+      
+      // 새 블록 애니메이션 트리거
+      setIsNewBlock(true);
+      setNewBlockNumbers(prev => new Set([...prev, lastBlock.number]));
       
       // 최근 블록 목록에 추가
       setRecentBlocks(prevBlocks => {
@@ -91,6 +93,16 @@ export default function Dashboard() {
         ...prev,
         blockHeight: lastBlock.number,
       }));
+      
+      // 3초 후 애니메이션 제거
+      setTimeout(() => {
+        setIsNewBlock(false);
+        setNewBlockNumbers(prev => {
+          const next = new Set(prev);
+          next.delete(lastBlock.number);
+          return next;
+        });
+      }, 3000);
     }
   }, [lastBlock]);
 
@@ -122,35 +134,17 @@ export default function Dashboard() {
           <Home className="w-10 h-10" />
           <span>블록체인 대시보드</span>
         </h1>
-        <div className="flex items-center justify-center space-x-4">
-          <p className="text-gray-600">
-            테스트넷의 실시간 정보를 확인하세요
-          </p>
-          {/* Socket 연결 상태 */}
-          <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm ${
-            isConnected 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-red-100 text-red-800'
-          }`}>
-            {isConnected ? (
-              <>
-                <Wifi className="w-4 h-4" />
-                <span>실시간 연결</span>
-              </>
-            ) : (
-              <>
-                <WifiOff className="w-4 h-4" />
-                <span>연결 끊김</span>
-              </>
-            )}
-          </div>
-        </div>
+        <p className="text-gray-600">
+          테스트넷의 실시간 정보를 확인하세요
+        </p>
       </div>
 
       {/* 네트워크 통계 카드들 */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* 최신 블록 높이 */}
-        <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
+        <div className={`bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500 transition-all duration-500 ${
+          isNewBlock ? 'bg-green-50 border-green-500 animate-pulse' : ''
+        }`}>
           <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
             최신 블록
           </div>
@@ -189,7 +183,9 @@ export default function Dashboard() {
         </div>
 
         {/* 트랜잭션 수 */}
-        <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-orange-500">
+        <div className={`bg-white rounded-lg shadow-lg p-6 border-l-4 border-orange-500 transition-all duration-500 ${
+          isNewBlock ? 'bg-green-50 border-green-500 animate-pulse' : ''
+        }`}>
           <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
             최신 블록 트랜잭션
           </div>
@@ -203,7 +199,9 @@ export default function Dashboard() {
       </div>
 
       {/* 최신 블록 정보 */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className={`bg-white rounded-lg shadow-lg p-6 transition-all duration-500 ${
+        isNewBlock ? 'bg-green-50 border-2 border-green-500' : ''
+      }`}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center space-x-2">
             <Package className="w-6 h-6" />
@@ -305,7 +303,14 @@ export default function Dashboard() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {recentBlocks.map((block) => (
-                  <tr key={block.number} className="hover:bg-gray-50">
+                  <tr 
+                    key={block.number} 
+                    className={`hover:bg-gray-50 transition-all duration-500 ${
+                      newBlockNumbers.has(block.number) 
+                        ? 'bg-green-50 border-l-4 border-green-500 animate-pulse' 
+                        : ''
+                    }`}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
                       <Link href={`/blocks/${block.number}`} className="hover:text-blue-800">
                         #{block.number}
@@ -345,10 +350,10 @@ export default function Dashboard() {
             </ul>
           </div>
           <div>
-            <h4 className="font-medium mb-2">자동 업데이트:</h4>
+            <h4 className="font-medium mb-2">실시간 업데이트:</h4>
             <ul className="space-y-1">
-              <li>• 페이지는 10초마다 자동으로 새로고침됩니다</li>
-              <li>• 실시간 연결 시 새 블록이 즉시 업데이트됩니다</li>
+              <li>• WebSocket 연결을 통해 새 블록이 실시간으로 추가됩니다</li>
+              <li>• 새 블록 도착 시 녹색 애니메이션으로 강조 표시됩니다</li>
               <li>• 수동 새로고침을 원하면 새로고침 버튼을 클릭하세요</li>
             </ul>
           </div>

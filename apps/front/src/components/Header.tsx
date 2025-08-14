@@ -1,6 +1,7 @@
 // 블록 탐색기 헤더 컴포넌트
 "use client";
 
+import { useSocket } from "@/hooks/useSocket";
 import { checkNetworkConnection } from "@/lib/web3";
 import { BarChart3, Blocks, CreditCard, Search, User } from "lucide-react";
 import Link from "next/link";
@@ -10,6 +11,9 @@ export default function Header() {
   // 네트워크 연결 상태를 관리하는 state
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [isChecking, setIsChecking] = useState<boolean>(true);
+
+  // WebSocket 연결 상태
+  const { isConnected: isSocketConnected } = useSocket();
 
   // 컴포넌트가 마운트될 때 네트워크 연결 상태 확인
   useEffect(() => {
@@ -46,25 +50,27 @@ export default function Header() {
 
           {/* 네트워크 상태 표시 */}
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div
-                className={`w-3 h-3 rounded-full ${
-                  isChecking
-                    ? "bg-yellow-400 animate-pulse"
-                    : isConnected
-                      ? "bg-green-400"
-                      : "bg-red-400"
-                }`}
-              />
-              <span className="text-sm">
-                {isChecking ? "연결 확인 중..." : isConnected ? "연결됨" : "연결 끊김"}
-              </span>
-            </div>
-
             {/* 네트워크 정보 */}
-            <div className="text-sm text-blue-200">
+            <div className="text-sm text-blue-200 space-y-1">
               <div>RPC: {process.env.RPC_URL}</div>
               <div>Chain ID: {process.env.CHAIN_ID}</div>
+              <div className="flex items-center space-x-4">
+                {/* RPC 연결 상태 */}
+                <div className="flex items-center space-x-2">
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      isChecking ? "bg-yellow-400 animate-pulse" : isConnected ? "bg-green-400" : "bg-red-400"
+                    }`}
+                  />
+                  <span>RPC: {isChecking ? "확인중" : isConnected ? "연결됨" : "연결 끊김"}</span>
+                </div>
+                
+                {/* WebSocket 연결 상태 */}
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${isSocketConnected ? "bg-green-400" : "bg-red-400"}`} />
+                  <span>WS: {isSocketConnected ? "연결됨" : "연결 끊김"}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -72,10 +78,7 @@ export default function Header() {
         {/* 네비게이션 메뉴 */}
         <nav className="mt-4">
           <div className="flex space-x-6">
-            <Link
-              href="/"
-              className="hover:text-blue-200 transition-colors font-medium flex items-center space-x-1"
-            >
+            <Link href="/" className="hover:text-blue-200 transition-colors font-medium flex items-center space-x-1">
               <BarChart3 className="w-4 h-4" />
               <span>대시보드</span>
             </Link>

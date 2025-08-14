@@ -33,7 +33,7 @@ export class BlockService {
       const maxBlocks = 10000; // 최대 10000개만 기록
       let count = 0;
       for (let i = blockNumber; i > lastBlock && count < maxBlocks; i--, count++) {
-        void this.blockInfo(i);
+        void this.blockPush(i);
       }
 
       // 마지막 블록 정보 기록
@@ -48,8 +48,28 @@ export class BlockService {
    *
    * @param blockNumber
    */
-  async blockInfo(blockNumber: number): Promise<void> {
+  async getBlock(blockNumber: number): Promise<Block | null> {
     const block: Block | null = await this.ethers.jsonProvider.getBlock(blockNumber);
+    return block;
+  }
+
+  async getRedisBlock(blockNumber: number): Promise<Record<string, unknown> | null> {
+    const block: string[] | null = await this.redis.zrange(CACHE_KEY.BLOCK, blockNumber, blockNumber);
+    console.log(blockNumber, block);
+    if (block && block.length > 0) {
+      return JSON.parse(block[0]) as Record<string, unknown>;
+    }
+
+    return null;
+  }
+
+  /**
+   * 블록 정보 조회
+   *
+   * @param blockNumber
+   */
+  async blockPush(blockNumber: number): Promise<void> {
+    const block: Block | null = await this.getBlock(blockNumber);
 
     // TODO: 블록 정보 조회 실패 시 처리
     if (!block) {
@@ -73,6 +93,8 @@ export class BlockService {
       prevRandao: block.prevRandao,
       extraData: block.extraData,
       baseFeePerGas: block.baseFeePerGas?.toString() || null,
+      gasLimit: block.gasLimit.toString(),
+      gasUsed: block.gasUsed.toString(),
     });
 
     // this.logger.debug(`블록 정보: ${blockNumber}`, {
@@ -115,6 +137,8 @@ export class BlockService {
       prevRandao: string | null;
       extraData: string | null;
       baseFeePerGas: string | null;
+      gasLimit: string;
+      gasUsed: string;
     },
   ) {
     console.log(`${blockNumber} 새로운 블록 저장`);

@@ -5,7 +5,7 @@ import ErrorMessage from "@/components/ErrorMessage";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useSocket } from "@/hooks/useSocket";
 import { BlockInfo, getBlocksFromAPI } from "@/lib/web3";
-import { Blocks, Lightbulb, RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { Blocks, Lightbulb, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -19,7 +19,7 @@ export default function BlocksPage() {
 
   // Socket 연결
   const { isConnected, lastBlock } = useSocket();
-  
+
   // 새로 추가된 블록 추적 (애니메이션용)
   const [newBlockNumbers, setNewBlockNumbers] = useState<Set<number>>(new Set());
 
@@ -35,10 +35,10 @@ export default function BlocksPage() {
       // API에서 블록 정보 가져오기
       const offset = (page - 1) * BLOCKS_PER_PAGE;
       const { blocks, total } = await getBlocksFromAPI(BLOCKS_PER_PAGE, offset);
-      
+
       // API에서 받은 total 값 사용
       setTotalBlocks(total);
-      
+
       if (blocks.length === 0) {
         // 첫 페이지가 아닌데 블록이 없다면 첫 페이지로 이동
         if (page > 1 && total > 0) {
@@ -51,7 +51,7 @@ export default function BlocksPage() {
 
       // 블록 번호 순으로 정렬 (최신 블록 먼저)
       blocks.sort((a, b) => b.number - a.number);
-      
+
       setBlocks(blocks);
     } catch (err) {
       console.error("블록 데이터 로딩 실패:", err);
@@ -70,34 +70,34 @@ export default function BlocksPage() {
   useEffect(() => {
     if (lastBlock && currentPage === 1) {
       console.log("새 블록 감지, 목록에 추가:", lastBlock);
-      
-      setBlocks(prevBlocks => {
+
+      setBlocks((prevBlocks) => {
         // 중복 체크
-        const exists = prevBlocks.some(block => block.number === lastBlock.number);
+        const exists = prevBlocks.some((block) => block.number === lastBlock.number);
         if (exists) {
           return prevBlocks;
         }
-        
+
         // 새 블록을 맨 앞에 추가하고 최대 20개만 유지
         const newBlocks = [lastBlock, ...prevBlocks].slice(0, BLOCKS_PER_PAGE);
-        
+
         // 새 블록 애니메이션을 위해 추가
-        setNewBlockNumbers(prev => new Set([...prev, lastBlock.number]));
-        
+        setNewBlockNumbers((prev) => new Set([...prev, lastBlock.number]));
+
         // 3초 후 애니메이션 제거
         setTimeout(() => {
-          setNewBlockNumbers(prev => {
+          setNewBlockNumbers((prev) => {
             const next = new Set(prev);
             next.delete(lastBlock.number);
             return next;
           });
         }, 3000);
-        
+
         return newBlocks;
       });
-      
+
       // 총 블록 수 업데이트
-      setTotalBlocks(prev => Math.max(prev, lastBlock.number + 1));
+      setTotalBlocks((prev) => Math.max(prev, lastBlock.number + 1));
     }
   }, [lastBlock, currentPage]);
 
@@ -150,36 +150,14 @@ export default function BlocksPage() {
           </p>
         </div>
 
-        {/* Socket 상태 및 새로고침 버튼 */}
-        <div className="flex items-center space-x-3">
-          {/* Socket 연결 상태 */}
-          <div className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${
-            isConnected 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-red-100 text-red-800'
-          }`}>
-            {isConnected ? (
-              <>
-                <Wifi className="w-4 h-4" />
-                <span className="text-sm">실시간 연결</span>
-              </>
-            ) : (
-              <>
-                <WifiOff className="w-4 h-4" />
-                <span className="text-sm">연결 끊김</span>
-              </>
-            )}
-          </div>
-
-          {/* 새로고침 버튼 */}
-          <button
-            onClick={() => loadBlocks(currentPage)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            <span>새로고침</span>
-          </button>
-        </div>
+        {/* 새로고침 버튼 */}
+        <button
+          onClick={() => loadBlocks(currentPage)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+          <span>새로고침</span>
+        </button>
       </div>
 
       {/* 블록 목록 테이블 */}
@@ -210,12 +188,10 @@ export default function BlocksPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {blocks.map((block) => (
-                <tr 
-                  key={block.number} 
+                <tr
+                  key={block.number}
                   className={`hover:bg-gray-50 transition-all duration-500 ${
-                    newBlockNumbers.has(block.number) 
-                      ? 'bg-green-50 border-l-4 border-green-500 animate-pulse' 
-                      : ''
+                    newBlockNumbers.has(block.number) ? "bg-green-50 border-l-4 border-green-500 animate-pulse" : ""
                   }`}
                 >
                   {/* 블록 번호 (클릭하면 상세 페이지로) */}
@@ -297,8 +273,7 @@ export default function BlocksPage() {
             <div className="text-sm text-gray-700">
               총 {totalBlocks.toLocaleString()}개 블록 중{" "}
               <span className="font-medium">
-                {(currentPage - 1) * BLOCKS_PER_PAGE + 1}-
-                {Math.min(currentPage * BLOCKS_PER_PAGE, totalBlocks)}
+                {(currentPage - 1) * BLOCKS_PER_PAGE + 1}-{Math.min(currentPage * BLOCKS_PER_PAGE, totalBlocks)}
               </span>
               번째 표시
             </div>

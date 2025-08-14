@@ -42,21 +42,28 @@ export function useSocket() {
     });
 
     // 새 블록 이벤트 처리
-    socket.on("newBlock", (blockData: any) => {
+    socket.on("newBlock", (blockData: BlockInfo) => {
       console.log("🆕 새 블록 받음:", blockData);
-      
+
       // 백엔드에서 받은 데이터를 BlockInfo 형태로 변환
       const newBlock: BlockInfo = {
         number: blockData.number,
         hash: blockData.hash || "",
         timestamp: blockData.timestamp,
-        transactionCount: blockData.transactions || 0,
-        gasUsed: "0", // 기본값
-        gasLimit: "0", // 기본값
+        transactionCount: blockData.transactionCount || 0,
+        gasUsed: blockData.gasUsed || "", // 기본값
+        gasLimit: blockData.gasLimit || "", // 기본값
         miner: blockData.miner || "",
-        parentHash: "", // 기본값
+        parentHash: blockData.parentHash || "", // 기본값
+        parentBeaconBlockRoot: blockData.parentBeaconBlockRoot || "", // 기본값
+        nonce: blockData.nonce || "", // 기본값
+        difficulty: blockData.difficulty || "", // 기본값
+        stateRoot: blockData.stateRoot || "", // 기본값
+        receiptsRoot: blockData.receiptsRoot || "", // 기본값
+        blobGasUsed: blockData.blobGasUsed || "", // 기본값
+        excessBlobGas: blockData.excessBlobGas || "", // 기본값
       };
-      
+
       setLastBlock(newBlock);
     });
 
