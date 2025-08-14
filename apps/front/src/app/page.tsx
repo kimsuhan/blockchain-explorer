@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { getLatestBlock, getRecentBlocks, provider, BlockInfo } from '@/lib/web3';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
-import { Home, Package, RefreshCw, Lightbulb } from 'lucide-react';
+import { useSocket } from '@/hooks/useSocket';
+import { Home, Package, RefreshCw, Lightbulb, Wifi, WifiOff } from 'lucide-react';
 
 export default function Dashboard() {
   // 상태 관리 (State Management)
@@ -19,6 +20,9 @@ export default function Dashboard() {
     gasPrice: '0',
     chainId: 0,
   });
+
+  // Socket 연결
+  const { isConnected, lastBlock } = useSocket();
 
   // 데이터를 불러오는 함수
   const loadData = async () => {
@@ -61,6 +65,35 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  // 새 블록이 도착했을 때 블록 목록에 추가
+  useEffect(() => {
+    if (lastBlock) {
+      console.log("새 블록 감지, 대시보드에 추가:", lastBlock);
+      
+      // 최신 블록 업데이트
+      setLatestBlock(lastBlock);
+      
+      // 최근 블록 목록에 추가
+      setRecentBlocks(prevBlocks => {
+        // 중복 체크
+        const exists = prevBlocks.some(block => block.number === lastBlock.number);
+        if (exists) {
+          return prevBlocks;
+        }
+        
+        // 새 블록을 맨 앞에 추가하고 최대 5개만 유지
+        const newBlocks = [lastBlock, ...prevBlocks].slice(0, 5);
+        return newBlocks;
+      });
+      
+      // 네트워크 통계 업데이트
+      setNetworkStats(prev => ({
+        ...prev,
+        blockHeight: lastBlock.number,
+      }));
+    }
+  }, [lastBlock]);
+
   // 로딩 중일 때 표시
   if (isLoading) {
     return <LoadingSpinner message="네트워크 정보를 불러오는 중..." />;
@@ -89,9 +122,29 @@ export default function Dashboard() {
           <Home className="w-10 h-10" />
           <span>블록체인 대시보드</span>
         </h1>
-        <p className="text-gray-600">
-          테스트넷의 실시간 정보를 확인하세요
-        </p>
+        <div className="flex items-center justify-center space-x-4">
+          <p className="text-gray-600">
+            테스트넷의 실시간 정보를 확인하세요
+          </p>
+          {/* Socket 연결 상태 */}
+          <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm ${
+            isConnected 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-red-100 text-red-800'
+          }`}>
+            {isConnected ? (
+              <>
+                <Wifi className="w-4 h-4" />
+                <span>실시간 연결</span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="w-4 h-4" />
+                <span>연결 끊김</span>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* 네트워크 통계 카드들 */}
@@ -295,6 +348,7 @@ export default function Dashboard() {
             <h4 className="font-medium mb-2">자동 업데이트:</h4>
             <ul className="space-y-1">
               <li>• 페이지는 10초마다 자동으로 새로고침됩니다</li>
+              <li>• 실시간 연결 시 새 블록이 즉시 업데이트됩니다</li>
               <li>• 수동 새로고침을 원하면 새로고침 버튼을 클릭하세요</li>
             </ul>
           </div>

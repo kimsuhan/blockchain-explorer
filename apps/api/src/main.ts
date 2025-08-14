@@ -45,9 +45,7 @@ async function bootstrap() {
   console.log(`  API_PORT: ${process.env.API_PORT}`);
   console.log(`  RPC_URL: ${process.env.RPC_URL}`);
   console.log(`  CHAIN_ID: ${process.env.CHAIN_ID}`);
-  console.log(
-    `  DEFAULT_ACCOUNTS: ${process.env.DEFAULT_ACCOUNTS ? '설정됨' : '없음'}`,
-  );
+  console.log(`  DEFAULT_ACCOUNTS: ${process.env.DEFAULT_ACCOUNTS ? '설정됨' : '없음'}`);
   console.log(`  NODE_ENV: ${process.env.NODE_ENV}`);
 
   const port = process.env.API_PORT || process.env.PORT || 4000;

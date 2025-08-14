@@ -1,3 +1,4 @@
+import { BlockGateway } from '@/modules/block/block.gateway';
 import { CACHE_KEY } from '@/modules/cache/consts/cache-key.const';
 import { RedisCacheService } from '@/modules/cache/redis-cache.service';
 import { EthersService } from '@/modules/ethers/ethers.service';
@@ -12,8 +13,9 @@ export class BlockService {
   constructor(
     private readonly redis: RedisCacheService,
     private readonly ethers: EthersService,
+    private readonly blockGateway: BlockGateway,
   ) {
-    this.initBlock();
+    void this.initBlock();
   }
 
   /**
@@ -30,7 +32,7 @@ export class BlockService {
     if (lastBlock < blockNumber) {
       const maxBlocks = 10000; // 최대 10000개만 기록
       let count = 0;
-      for (let i = blockNumber; i >= lastBlock && count < maxBlocks; i--, count++) {
+      for (let i = blockNumber; i > lastBlock && count < maxBlocks; i--, count++) {
         void this.blockInfo(i);
       }
 
@@ -124,6 +126,9 @@ export class BlockService {
     if (blocks.length >= maxBlocks) {
       await this.redis.zremrangebyrank(CACHE_KEY.BLOCK, 0, maxBlocks);
     }
+
+    // WebSocket으로 새 블록 알림 브로드캐스트
+    this.blockGateway.broadcastNewBlock({ ...info, number: blockNumber });
   }
 
   /**
@@ -132,9 +137,29 @@ export class BlockService {
    * @param limit
    * @param offset
    */
-  async getBlocks(limit: number, offset: number): Promise<string[]> {
+  async getBlocks(limit: number, offset: number): Promise<{ data: string[]; total: number }> {
     const len = await this.redis.zcard(CACHE_KEY.BLOCK);
-    const blocks = await this.redis.zrange(CACHE_KEY.BLOCK, len - offset - limit, len - offset - 1);
-    return blocks;
+
+    // 최신 블록부터 역순으로 가져오기 위해 start/end 계산
+    const start = Math.max(0, len - offset - limit);
+    const end = Math.max(-1, len - offset - 1);
+
+    // start가 end보다 큰 경우 빈 배열 반환
+    if (start > end || start >= len) {
+      return {
+        data: [],
+        total: len,
+      };
+    }
+
+    const blocks = await this.redis.zrange(CACHE_KEY.BLOCK, start, end);
+
+    // 최신 블록이 먼저 오도록 역순 정렬
+    const reversedBlocks = blocks.reverse();
+
+    return {
+      data: reversedBlocks,
+      total: len,
+    };
   }
 }

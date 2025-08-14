@@ -3,8 +3,9 @@
 
 import ErrorMessage from "@/components/ErrorMessage";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { BlockInfo, provider } from "@/lib/web3";
-import { Blocks, Lightbulb, RefreshCw } from "lucide-react";
+import { useSocket } from "@/hooks/useSocket";
+import { BlockInfo, getBlocksFromAPI } from "@/lib/web3";
+import { Blocks, Lightbulb, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -16,6 +17,12 @@ export default function BlocksPage() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalBlocks, setTotalBlocks] = useState<number>(0);
 
+  // Socket 연결
+  const { isConnected, lastBlock } = useSocket();
+  
+  // 새로 추가된 블록 추적 (애니메이션용)
+  const [newBlockNumbers, setNewBlockNumbers] = useState<Set<number>>(new Set());
+
   // 페이지당 표시할 블록 수
   const BLOCKS_PER_PAGE = 20;
 
@@ -25,42 +32,30 @@ export default function BlocksPage() {
       setIsLoading(true);
       setError(null);
 
-      // 최신 블록 번호 가져오기
-      const latestBlockNumber = await provider.getBlockNumber();
-      setTotalBlocks(latestBlockNumber + 1); // 블록 번호는 0부터 시작
-
-      // 현재 페이지에 해당하는 블록들 계산
-      const startBlock = Math.max(0, latestBlockNumber - (page - 1) * BLOCKS_PER_PAGE);
-      const blocksToFetch = Math.min(BLOCKS_PER_PAGE, startBlock + 1);
-
-      const blockPromises = [];
-      for (let i = 0; i < blocksToFetch; i++) {
-        const blockNumber = startBlock - i;
-        if (blockNumber >= 0) {
-          blockPromises.push(provider.getBlock(blockNumber, true));
+      // API에서 블록 정보 가져오기
+      const offset = (page - 1) * BLOCKS_PER_PAGE;
+      const { blocks, total } = await getBlocksFromAPI(BLOCKS_PER_PAGE, offset);
+      
+      // API에서 받은 total 값 사용
+      setTotalBlocks(total);
+      
+      if (blocks.length === 0) {
+        // 첫 페이지가 아닌데 블록이 없다면 첫 페이지로 이동
+        if (page > 1 && total > 0) {
+          setCurrentPage(1);
+          return;
         }
+        setBlocks([]);
+        return;
       }
 
-      const blockResults = await Promise.all(blockPromises);
-
-      // 블록 정보를 우리 형식으로 변환
-      const formattedBlocks: BlockInfo[] = blockResults
-        .filter((block) => block !== null)
-        .map((block) => ({
-          number: block!.number,
-          hash: block!.hash ?? "",
-          timestamp: block!.timestamp,
-          transactionCount: block!.transactions.length,
-          gasUsed: block!.gasUsed.toString(),
-          gasLimit: block!.gasLimit.toString(),
-          miner: block!.miner,
-          parentHash: block!.parentHash,
-        }));
-
-      setBlocks(formattedBlocks);
+      // 블록 번호 순으로 정렬 (최신 블록 먼저)
+      blocks.sort((a, b) => b.number - a.number);
+      
+      setBlocks(blocks);
     } catch (err) {
       console.error("블록 데이터 로딩 실패:", err);
-      setError("블록 데이터를 불러오는데 실패했습니다. 테스트넷 연결 상태를 확인해주세요.");
+      setError("블록 데이터를 불러오는데 실패했습니다. API 서버 연결 상태를 확인해주세요.");
     } finally {
       setIsLoading(false);
     }
@@ -71,6 +66,41 @@ export default function BlocksPage() {
     loadBlocks(currentPage);
   }, [currentPage]);
 
+  // 새 블록이 도착했을 때 첫 페이지라면 블록 목록에 추가
+  useEffect(() => {
+    if (lastBlock && currentPage === 1) {
+      console.log("새 블록 감지, 목록에 추가:", lastBlock);
+      
+      setBlocks(prevBlocks => {
+        // 중복 체크
+        const exists = prevBlocks.some(block => block.number === lastBlock.number);
+        if (exists) {
+          return prevBlocks;
+        }
+        
+        // 새 블록을 맨 앞에 추가하고 최대 20개만 유지
+        const newBlocks = [lastBlock, ...prevBlocks].slice(0, BLOCKS_PER_PAGE);
+        
+        // 새 블록 애니메이션을 위해 추가
+        setNewBlockNumbers(prev => new Set([...prev, lastBlock.number]));
+        
+        // 3초 후 애니메이션 제거
+        setTimeout(() => {
+          setNewBlockNumbers(prev => {
+            const next = new Set(prev);
+            next.delete(lastBlock.number);
+            return next;
+          });
+        }, 3000);
+        
+        return newBlocks;
+      });
+      
+      // 총 블록 수 업데이트
+      setTotalBlocks(prev => Math.max(prev, lastBlock.number + 1));
+    }
+  }, [lastBlock, currentPage]);
+
   // 페이지 변경 함수
   const handlePageChange = (newPage: number) => {
     const totalPages = Math.ceil(totalBlocks / BLOCKS_PER_PAGE);
@@ -78,6 +108,9 @@ export default function BlocksPage() {
       setCurrentPage(newPage);
     }
   };
+
+  // 총 페이지 수 계산
+  const totalPages = Math.ceil(totalBlocks / BLOCKS_PER_PAGE);
 
   // 시간을 읽기 쉬운 형태로 변환
   const formatTime = (timestamp: number) => {
@@ -103,8 +136,6 @@ export default function BlocksPage() {
     return <ErrorMessage message={error} onRetry={() => loadBlocks(currentPage)} />;
   }
 
-  const totalPages = Math.ceil(totalBlocks / BLOCKS_PER_PAGE);
-
   return (
     <div className="space-y-6">
       {/* 페이지 헤더 */}
@@ -119,14 +150,36 @@ export default function BlocksPage() {
           </p>
         </div>
 
-        {/* 새로고침 버튼 */}
-        <button
-          onClick={() => loadBlocks(currentPage)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-        >
-          <RefreshCw className="w-4 h-4" />
-          <span>새로고침</span>
-        </button>
+        {/* Socket 상태 및 새로고침 버튼 */}
+        <div className="flex items-center space-x-3">
+          {/* Socket 연결 상태 */}
+          <div className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${
+            isConnected 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-red-100 text-red-800'
+          }`}>
+            {isConnected ? (
+              <>
+                <Wifi className="w-4 h-4" />
+                <span className="text-sm">실시간 연결</span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="w-4 h-4" />
+                <span className="text-sm">연결 끊김</span>
+              </>
+            )}
+          </div>
+
+          {/* 새로고침 버튼 */}
+          <button
+            onClick={() => loadBlocks(currentPage)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>새로고침</span>
+          </button>
+        </div>
       </div>
 
       {/* 블록 목록 테이블 */}
@@ -157,7 +210,14 @@ export default function BlocksPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {blocks.map((block) => (
-                <tr key={block.number} className="hover:bg-gray-50 transition-colors">
+                <tr 
+                  key={block.number} 
+                  className={`hover:bg-gray-50 transition-all duration-500 ${
+                    newBlockNumbers.has(block.number) 
+                      ? 'bg-green-50 border-l-4 border-green-500 animate-pulse' 
+                      : ''
+                  }`}
+                >
                   {/* 블록 번호 (클릭하면 상세 페이지로) */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link
@@ -334,6 +394,7 @@ export default function BlocksPage() {
           <li>• 가스 사용량은 &quot;사용된 가스 / 가스 한도&quot; 형태로 표시됩니다</li>
           <li>• 마우스를 올리면 전체 해시와 주소를 확인할 수 있습니다</li>
           <li>• 페이지는 최신 블록부터 오래된 블록 순으로 정렬됩니다</li>
+          <li>• 실시간 연결 시 새 블록이 자동으로 업데이트됩니다</li>
         </ul>
       </div>
     </div>

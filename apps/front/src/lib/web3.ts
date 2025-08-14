@@ -208,3 +208,38 @@ export async function checkNetworkConnection(): Promise<boolean> {
     return false;
   }
 }
+
+// API에서 블록 정보 가져오기
+export async function getBlocksFromAPI(limit: number = 20, offset: number = 0): Promise<{ blocks: BlockInfo[]; total: number }> {
+  try {
+    const apiUrl = process.env.API_URL || "http://localhost:4000";
+    const response = await fetch(`${apiUrl}/block?limit=${limit}&offset=${offset}`);
+    
+    if (!response.ok) {
+      throw new Error(`API 호출 실패: ${response.status}`);
+    }
+    
+    const apiResponse = await response.json();
+    const { data: blockStrings, total } = apiResponse;
+    
+    // JSON 문자열들을 파싱하여 BlockInfo 형태로 변환
+    const blocks: BlockInfo[] = blockStrings.map((blockStr: string) => {
+      const blockData = JSON.parse(blockStr);
+      return {
+        number: blockData.number,
+        hash: blockData.hash ?? "",
+        timestamp: blockData.timestamp,
+        transactionCount: blockData.transactions,
+        gasUsed: "0", // API에서 gasUsed 정보가 없으므로 기본값
+        gasLimit: "0", // API에서 gasLimit 정보가 없으므로 기본값  
+        miner: blockData.miner ?? "",
+        parentHash: "", // API에서 parentHash 정보가 없으므로 기본값
+      };
+    });
+    
+    return { blocks, total };
+  } catch (error) {
+    console.error("API에서 블록 정보 가져오기 실패:", error);
+    throw error;
+  }
+}

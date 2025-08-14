@@ -6,10 +6,9 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 export class BlockSchedule {
   constructor(private readonly blockService: BlockService) {}
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_SECOND)
   handle() {
     const initOn = this.blockService.initOn;
-    console.log(`initOn: ${initOn}`);
     if (!initOn) {
       return;
     }
