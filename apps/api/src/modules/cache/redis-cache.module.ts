@@ -1,11 +1,14 @@
+import { RedisCacheService } from '@/modules/cache/redis-cache.service';
 import { createKeyv, Keyv } from '@keyv/redis';
 import { CacheModule } from '@nestjs/cache-manager';
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { CacheableMemory } from 'cacheable';
 
+@Global()
 @Module({
   imports: [
     CacheModule.registerAsync({
+      isGlobal: true,
       useFactory: () => {
         return {
           stores: [
@@ -18,5 +21,7 @@ import { CacheableMemory } from 'cacheable';
       },
     }),
   ],
+  providers: [RedisCacheService],
+  exports: [RedisCacheService],
 })
 export class RedisCacheModule {}

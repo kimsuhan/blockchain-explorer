@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 import { AppModule } from './app.module';
@@ -28,6 +29,16 @@ async function bootstrap() {
 
   // CORS 활성화 (프론트엔드와 통신을 위해)
   app.enableCors();
+
+  const config = new DocumentBuilder()
+    .setTitle('Cats example')
+    .setDescription('The cats API description')
+    .setVersion('1.0')
+    .addTag('cats')
+    .build();
+
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, documentFactory);
 
   // 환경변수 디버깅 로그
   console.log('🔍 Environment Variables:');
