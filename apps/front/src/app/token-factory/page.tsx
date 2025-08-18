@@ -1,9 +1,10 @@
 "use client";
 
 import { ethers } from "ethers";
-import { AlertCircle, CheckCircle, Coins, Loader, Wallet, RefreshCw, ExternalLink } from "lucide-react";
+import { AlertCircle, CheckCircle, Coins, Loader, RefreshCw, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useWallet } from "@/contexts/WalletContext";
 
 const TOKEN_FACTORY_ABI = [
   {
@@ -124,9 +125,8 @@ interface DeployedToken {
 }
 
 export default function TokenFactory() {
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string>("");
-  const [isConnecting, setIsConnecting] = useState(false);
+  // 전역 지갑 상태 사용
+  const { isConnected: isWalletConnected, address: walletAddress } = useWallet();
 
   // 토큰 발행 폼 상태
   const [tokenName, setTokenName] = useState("");
@@ -145,46 +145,11 @@ export default function TokenFactory() {
   const [isLoadingTokens, setIsLoadingTokens] = useState(false);
   const TOKENS_PER_PAGE = 10;
 
-  // 지갑 연결 확인 및 토큰 목록 로딩
+  // 토큰 목록 로딩
   useEffect(() => {
-    checkWalletConnection();
     loadTokensFromAPI(1);
   }, []);
 
-  const checkWalletConnection = async () => {
-    if (typeof window !== "undefined" && window.ethereum) {
-      try {
-        const accounts = await window.ethereum.request({ method: "eth_accounts" });
-        if (accounts.length > 0) {
-          setIsWalletConnected(true);
-          setWalletAddress(accounts[0]);
-        }
-      } catch (error) {
-        console.error("지갑 연결 확인 중 오류:", error);
-      }
-    }
-  };
-
-  const connectWallet = async () => {
-    if (typeof window === "undefined" || !window.ethereum) {
-      alert("MetaMask가 설치되지 않았습니다. MetaMask를 설치해주세요.");
-      return;
-    }
-
-    setIsConnecting(true);
-    try {
-      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-      if (accounts.length > 0) {
-        setIsWalletConnected(true);
-        setWalletAddress(accounts[0]);
-      }
-    } catch (error) {
-      console.error("지갑 연결 실패:", error);
-      alert("지갑 연결에 실패했습니다.");
-    } finally {
-      setIsConnecting(false);
-    }
-  };
 
   // API에서 토큰 목록 로딩 (페이징 지원)
   const loadTokensFromAPI = async (page: number = 1) => {
@@ -323,99 +288,86 @@ export default function TokenFactory() {
         </div>
 
         {/* 토큰 발행 폼 */}
-        <div className="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">토큰 발행</h2>
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">빠른 토큰 발행</h2>
 
-            {/* 지갑 연결 */}
-            {!isWalletConnected ? (
-              <div className="mb-6">
-                <button
-                  onClick={connectWallet}
-                  disabled={isConnecting}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
-                >
-                  {isConnecting ? (
-                    <>
-                      <Loader className="w-5 h-5 animate-spin" />
-                      <span>연결 중...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Wallet className="w-5 h-5" />
-                      <span>지갑 연결</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            ) : (
-              <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <span className="text-green-800 font-medium">지갑 연결됨</span>
-                </div>
-                <p className="text-green-700 text-sm mt-1">
-                  {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                </p>
-              </div>
-            )}
+          {/* 지갑 미연결 시에만 안내 메시지 표시 */}
+          {!isWalletConnected && (
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+              <p className="text-yellow-800">
+                토큰을 발행하려면 상단 우측의 "지갑 연결" 버튼을 클릭하세요
+              </p>
+            </div>
+          )}
 
-            {/* 토큰 정보 입력 폼 */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">토큰 이름</label>
-                <input
-                  type="text"
-                  value={tokenName}
-                  onChange={(e) => setTokenName(e.target.value)}
-                  placeholder="예: My Token"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={!isWalletConnected || isDeploying}
-                />
-              </div>
+          {/* 토큰 정보 입력 폼 - 한 줄로 배치 */}
+          <div className="flex flex-col lg:flex-row lg:items-end lg:space-x-4 space-y-4 lg:space-y-0">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                토큰 이름
+              </label>
+              <input
+                type="text"
+                value={tokenName}
+                onChange={(e) => setTokenName(e.target.value)}
+                placeholder="예: My Token"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={!isWalletConnected || isDeploying}
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">토큰 심볼</label>
-                <input
-                  type="text"
-                  value={tokenSymbol}
-                  onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())}
-                  placeholder="예: MTK"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={!isWalletConnected || isDeploying}
-                />
-              </div>
+            <div className="lg:w-32">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                심볼
+              </label>
+              <input
+                type="text"
+                value={tokenSymbol}
+                onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())}
+                placeholder="MTK"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={!isWalletConnected || isDeploying}
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">초기 발행량</label>
-                <input
-                  type="number"
-                  value={initialSupply}
-                  onChange={(e) => setInitialSupply(e.target.value)}
-                  placeholder="예: 1000000"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={!isWalletConnected || isDeploying}
-                />
-                <p className="text-xs text-gray-500 mt-1">토큰 단위로 입력하세요 (소수점 18자리 지원)</p>
-              </div>
+            <div className="lg:w-40">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                발행량
+              </label>
+              <input
+                type="number"
+                value={initialSupply}
+                onChange={(e) => setInitialSupply(e.target.value)}
+                placeholder="1000000"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={!isWalletConnected || isDeploying}
+              />
+            </div>
 
+            <div className="lg:w-36">
               <button
                 onClick={deployToken}
                 disabled={!isWalletConnected || isDeploying || !tokenName || !tokenSymbol || !initialSupply}
-                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isDeploying ? (
                   <>
-                    <Loader className="w-5 h-5 animate-spin" />
-                    <span>배포 중...</span>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    <span>발행중</span>
                   </>
                 ) : (
                   <>
-                    <Coins className="w-5 h-5" />
-                    <span>토큰 발행</span>
+                    <Coins className="w-4 h-4" />
+                    <span>발행</span>
                   </>
                 )}
               </button>
             </div>
+          </div>
+
+          <p className="text-xs text-gray-500 mt-3 text-center">
+            토큰은 ERC-20 표준을 따르며, 18자리 소수점을 지원합니다
+          </p>
 
             {/* 배포 상태 메시지 */}
             {deploymentStatus !== "idle" && (

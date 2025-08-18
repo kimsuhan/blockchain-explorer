@@ -70,7 +70,7 @@ export class TokenFactoryService {
       return;
     }
 
-    this.db.data.tokens.push({
+    this.db.data.tokens.unshift({
       name,
       symbol,
       initialSupply,
@@ -116,7 +116,7 @@ export class TokenFactoryService {
         const transaction = await event.getTransaction();
         if (filteredToken.length === 0) {
           this.logger.log(`🔍 새로운 토큰 발견: ${name} ${symbol} ${initialSupply} ${owner}`);
-          this.db.data.tokens.push({
+          this.db.data.tokens.unshift({
             name: name as string,
             symbol: symbol as string,
             initialSupply: ethers.formatEther(initialSupply as bigint),

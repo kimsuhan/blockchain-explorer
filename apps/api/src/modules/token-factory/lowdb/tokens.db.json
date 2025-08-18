@@ -1,6 +1,14 @@
 {
   "tokens": [
     {
+      "name": "한국어도됨?",
+      "symbol": "AOT",
+      "initialSupply": "300.0",
+      "address": "0xCfEB869F69431e42cdB54A4F4f105C19C080A601",
+      "txHash": "0x7e1bf1d1915967cc8dfd3667aab695bd4ac1a045ea01fc1ffebd4c5c62077b15",
+      "owner": "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1"
+    },
+    {
       "name": "Test",
       "symbol": "TTK",
       "initialSupply": "10000.0",
@@ -127,6 +135,14 @@
       "owner": "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1",
       "txHash": "0x0dce63aa8bd5abfca35b219af4effff4d111d45d73fd1eba0cc27e42150c645c",
       "address": "0xCfEB869F69431e42cdB54A4F4f105C19C080A601"
+    },
+    {
+      "name": "Forlong Token",
+      "symbol": "FOT",
+      "initialSupply": "5000.0",
+      "address": "0xCfEB869F69431e42cdB54A4F4f105C19C080A601",
+      "txHash": "0x7aa423f83b2a5c2ea1e96d8a6c77ebdf97e229cebdb1b63b2c524e069c0b9b88",
+      "owner": "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1"
     }
   ]
 }

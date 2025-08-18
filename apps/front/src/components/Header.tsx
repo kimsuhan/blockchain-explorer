@@ -3,7 +3,8 @@
 
 import { useSocket } from "@/hooks/useSocket";
 import { checkNetworkConnection } from "@/lib/web3";
-import { BarChart3, Blocks, CreditCard, Search, User, Coins } from "lucide-react";
+import { useWallet } from "@/contexts/WalletContext";
+import { BarChart3, Blocks, CreditCard, Search, User, Coins, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -14,6 +15,9 @@ export default function Header() {
 
   // WebSocket 연결 상태
   const { isConnected: isSocketConnected } = useSocket();
+  
+  // 지갑 연결 상태
+  const { isConnected: isWalletConnected, address, isConnecting, connectWallet, disconnectWallet } = useWallet();
 
   // 컴포넌트가 마운트될 때 네트워크 연결 상태 확인
   useEffect(() => {
@@ -48,8 +52,49 @@ export default function Header() {
             <span className="text-blue-200 text-sm">Test Network</span>
           </div>
 
-          {/* 네트워크 상태 표시 */}
+          {/* 지갑 연결 및 네트워크 상태 표시 */}
           <div className="flex items-center space-x-4">
+            {/* 지갑 연결 버튼 */}
+            <div className="flex items-center">
+              {!isWalletConnected ? (
+                <button
+                  onClick={connectWallet}
+                  disabled={isConnecting}
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 disabled:opacity-50"
+                >
+                  {isConnecting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>연결 중...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Wallet className="w-4 h-4" />
+                      <span>지갑 연결</span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <div className="flex items-center space-x-3">
+                  <div className="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      <span className="font-mono text-xs">
+                        {address.slice(0, 6)}...{address.slice(-4)}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={disconnectWallet}
+                    className="text-blue-200 hover:text-white text-xs underline"
+                    title="지갑 연결 해제"
+                  >
+                    연결 해제
+                  </button>
+                </div>
+              )}
+            </div>
+            
             {/* 네트워크 정보 */}
             <div className="text-sm text-blue-200 space-y-1">
               <div>RPC: {process.env.RPC_URL}</div>
