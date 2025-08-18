@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import { WalletProvider } from "@/contexts/WalletContext";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -28,8 +29,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 min-h-screen`}
       >
-        <Header />
-        <main className="container mx-auto px-4 py-8">{children}</main>
+        <WalletProvider>
+          <Header />
+          <main className="container mx-auto px-4 py-8">{children}</main>
+        </WalletProvider>
       </body>
     </html>
   );
