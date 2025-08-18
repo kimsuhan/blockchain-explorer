@@ -23,17 +23,23 @@ export class BlockService {
    */
   async initBlock() {
     this.initOn = false;
-    const blockNumber: number = await this.ethers.jsonProvider.getBlockNumber();
-    const lastBlock: number = Number(await this.redis.get(CACHE_KEY.LAST_BLOCK)) || 0;
+    const blockNumber: number = await this.ethers.jsonProvider.getBlockNumber(); // 현재 블록 번호
+    let lastBlock: number = Number(await this.redis.get(CACHE_KEY.LAST_BLOCK)) || 0; // 마지막 블록 번호
     if (lastBlock === 0) {
       await this.redis.flushall();
     }
 
+    // 현재 블록 번호가 마지막 블록 번호보다 크면
     if (lastBlock < blockNumber) {
       const maxBlocks = 10000; // 최대 10000개만 기록
-      let count = 0;
-      for (let i = blockNumber; i > lastBlock && count < maxBlocks; i--, count++) {
-        void this.blockPush(i);
+      if (blockNumber - lastBlock > maxBlocks) {
+        lastBlock = blockNumber - maxBlocks;
+      }
+
+      for (let i = lastBlock; i < blockNumber; i++) {
+        await this.blockPush(i);
+        // await new Promise((resolve) => setTimeout(resolve, 50));
+        this.logger.log(`${(i / blockNumber) * 100}% 블록 저장 완료`);
       }
 
       // 마지막 블록 정보 기록
@@ -66,10 +72,18 @@ export class BlockService {
    * @returns
    */
   async getRedisBlock(blockNumber: number): Promise<Record<string, unknown> | null> {
-    blockNumber -= 1; // 0부터 시작하므로 1 빼줌
-    const block: string[] | null = await this.redis.zrange(CACHE_KEY.BLOCK, blockNumber, blockNumber);
-    if (block && block.length > 0) {
-      return JSON.parse(block[0]) as Record<string, unknown>;
+    // 모든 블록을 가져와서 해당 번호의 블록 찾기
+    const allBlocks = await this.redis.lrange(CACHE_KEY.BLOCK, 0, -1);
+
+    for (const blockStr of allBlocks) {
+      try {
+        const blockData = JSON.parse(blockStr) as Record<string, unknown>;
+        if (blockData.number === blockNumber) {
+          return blockData;
+        }
+      } catch (error) {
+        this.logger.error('블록 데이터 파싱 실패:', error);
+      }
     }
 
     return null;
@@ -90,10 +104,14 @@ export class BlockService {
     }
 
     // Sorted Set 으로 넣어보기
-    await this.pushBlock(block.number, {
+    this.logger.debug(`${blockNumber} 새로운 블록 저장`);
+
+    const info = {
+      number: blockNumber,
       hash: block.hash,
       timestamp: block.timestamp,
       transactions: block.transactions.length,
+      parentHash: block.parentHash,
       parentBeaconBlockRoot: block.parentBeaconBlockRoot,
       nonce: block.nonce,
       difficulty: block.difficulty.toString(),
@@ -107,48 +125,15 @@ export class BlockService {
       baseFeePerGas: block.baseFeePerGas?.toString() || null,
       gasLimit: block.gasLimit.toString(),
       gasUsed: block.gasUsed.toString(),
-    });
-  }
+    };
 
-  /**
-   * 블록 정보 저장
-   *
-   * @param blockNumber
-   * @param info
-   */
-  async pushBlock(
-    blockNumber: number,
-    info: {
-      hash: string | null;
-      timestamp: number;
-      transactions: number;
-      parentBeaconBlockRoot: string | null;
-      nonce: string;
-      difficulty: string;
-      stateRoot: string | null;
-      receiptsRoot: string | null;
-      blobGasUsed: string | null;
-      excessBlobGas: string | null;
-      miner: string | null;
-      prevRandao: string | null;
-      extraData: string | null;
-      baseFeePerGas: string | null;
-      gasLimit: string;
-      gasUsed: string;
-    },
-  ) {
-    console.log(`${blockNumber} 새로운 블록 저장`);
-    await this.redis.zadd(CACHE_KEY.BLOCK, blockNumber, JSON.stringify({ ...info, number: blockNumber }));
+    await this.redis.lpush(CACHE_KEY.BLOCK, JSON.stringify(info));
 
     // 최대 10000개만 기록
-    const maxBlocks = 10000;
-    const blocks = await this.redis.zrange(CACHE_KEY.BLOCK, 0, -1);
-    if (blocks.length >= maxBlocks) {
-      await this.redis.zremrangebyrank(CACHE_KEY.BLOCK, 0, maxBlocks);
-    }
+    await this.redis.ltrim(CACHE_KEY.BLOCK, 0, 9999);
 
     // WebSocket으로 새 블록 알림 브로드캐스트
-    this.blockGateway.broadcastNewBlock({ ...info, number: blockNumber });
+    this.blockGateway.broadcastNewBlock(info);
   }
 
   /**
@@ -166,28 +151,14 @@ export class BlockService {
    * @param limit
    * @param offset
    */
-  async getBlocks(limit: number, offset: number): Promise<{ data: string[]; total: number }> {
-    const len = await this.redis.zcard(CACHE_KEY.BLOCK);
+  async getBlocks(limit: number, offset: number): Promise<{ data: Record<string, unknown>[]; total: number }> {
+    const len = await this.redis.llen(CACHE_KEY.BLOCK);
+    const blocks = await this.redis.lrange(CACHE_KEY.BLOCK, offset, offset + limit - 1);
 
-    // 최신 블록부터 역순으로 가져오기 위해 start/end 계산
-    const start = Math.max(0, len - offset - limit);
-    const end = Math.max(-1, len - offset - 1);
-
-    // start가 end보다 큰 경우 빈 배열 반환
-    if (start > end || start >= len) {
-      return {
-        data: [],
-        total: len,
-      };
-    }
-
-    const blocks = await this.redis.zrange(CACHE_KEY.BLOCK, start, end);
-
-    // 최신 블록이 먼저 오도록 역순 정렬
-    const reversedBlocks = blocks.reverse();
+    const response = blocks.map((block) => JSON.parse(block) as Record<string, unknown>);
 
     return {
-      data: reversedBlocks,
+      data: response,
       total: len,
     };
   }

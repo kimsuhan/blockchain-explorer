@@ -3,8 +3,9 @@
 
 import ErrorMessage from "@/components/ErrorMessage";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { BlockInfo, getBlockByNumber, getTransactionsFromBlock, TransactionInfo } from "@/lib/web3";
-import { CreditCard, Package, Search } from "lucide-react";
+import MerkleTreeVisualization from "@/components/MerkleTreeVisualization";
+import { BlockInfo, getBlockFromAPI, getTransactionsFromBlock, TransactionInfo } from "@/lib/web3";
+import { Copy, CreditCard, Package, Search } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -38,7 +39,7 @@ export default function BlockDetailPage() {
 
       // 블록 정보와 트랜잭션을 동시에 가져오기
       const [blockData, transactionData] = await Promise.all([
-        getBlockByNumber(blockNumber),
+        getBlockFromAPI(blockNumber),
         getTransactionsFromBlock(blockNumber),
       ]);
 
@@ -97,9 +98,7 @@ export default function BlockDetailPage() {
   }
 
   const timeInfo = formatTime(block.timestamp);
-  const displayedTransactions = showAllTransactions
-    ? transactions
-    : transactions.slice(0, TRANSACTIONS_PREVIEW_COUNT);
+  const displayedTransactions = showAllTransactions ? transactions : transactions.slice(0, TRANSACTIONS_PREVIEW_COUNT);
 
   return (
     <div className="space-y-6">
@@ -174,15 +173,13 @@ export default function BlockDetailPage() {
             <div className="font-medium text-gray-600">블록 해시</div>
             <div className="md:col-span-2">
               <div className="flex items-center space-x-2">
-                <span className="font-mono text-sm bg-gray-100 p-2 rounded flex-1 break-all">
-                  {block.hash}
-                </span>
+                <span className="font-mono text-sm bg-gray-100 p-2 rounded flex-1 break-all">{block.hash}</span>
                 <button
                   onClick={() => copyToClipboard(block.hash)}
                   className="bg-blue-100 text-blue-600 px-3 py-2 rounded hover:bg-blue-200 transition-colors flex-shrink-0"
                   title="복사"
                 >
-                  📋
+                  <Copy className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -204,7 +201,7 @@ export default function BlockDetailPage() {
                   className="bg-blue-100 text-blue-600 px-3 py-2 rounded hover:bg-blue-200 transition-colors flex-shrink-0"
                   title="복사"
                 >
-                  📋
+                  <Copy className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -215,15 +212,13 @@ export default function BlockDetailPage() {
             <div className="font-medium text-gray-600">마이너 (채굴자)</div>
             <div className="md:col-span-2">
               <div className="flex items-center space-x-2">
-                <span className="font-mono text-sm bg-gray-100 p-2 rounded flex-1 break-all">
-                  {block.miner}
-                </span>
+                <span className="font-mono text-sm bg-gray-100 p-2 rounded flex-1 break-all">{block.miner}</span>
                 <button
                   onClick={() => copyToClipboard(block.miner)}
                   className="bg-blue-100 text-blue-600 px-3 py-2 rounded hover:bg-blue-200 transition-colors flex-shrink-0"
                   title="복사"
                 >
-                  📋
+                  <Copy className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -267,12 +262,17 @@ export default function BlockDetailPage() {
         </div>
       </div>
 
+      {/* 머클트리 시각화 */}
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <MerkleTreeVisualization transactionHashes={transactions.map((tx) => tx.hash)} title="머클트리 시각화" />
+      </div>
+
       {/* 트랜잭션 목록 */}
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center space-x-2">
             <CreditCard className="w-6 h-6 mr-2" />
-            트랜잭션 ({transactions.length}개)
+            <span>트랜잭션 ({transactions.length}개)</span>
           </h2>
 
           {transactions.length > TRANSACTIONS_PREVIEW_COUNT && (
@@ -292,24 +292,12 @@ export default function BlockDetailPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    해시
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    보내는 곳
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    받는 곳
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    금액 (ETH)
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    가스 사용
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    상태
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">해시</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">보내는 곳</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">받는 곳</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">금액 (ETH)</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">가스 사용</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">

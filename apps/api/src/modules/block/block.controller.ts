@@ -11,20 +11,20 @@ export class BlockController {
   async getBlocks(
     @Query('limit') limit: number,
     @Query('offset') offset: number,
-  ): Promise<{ data: string[]; total: number }> {
-    this.logger.log('[GET] /block');
+  ): Promise<{ data: Record<string, unknown>[]; total: number }> {
+    this.logger.log(`[GET] /block?limit=${limit}&offset=${offset}`);
     return await this.blockService.getBlocks(limit, offset);
   }
 
   @Get('block/:blockNumber')
   async getBlock(@Param('blockNumber') blockNumber: number): Promise<Block | null> {
-    this.logger.log('[GET] /block/:blockNumber');
+    this.logger.log(`[GET] /block/:blockNumber?blockNumber=${blockNumber}`);
     return await this.blockService.getBlock(Number(blockNumber));
   }
 
   @Get('redis/:blockNumber')
   async getRedisBlock(@Param('blockNumber') blockNumber: number): Promise<Record<string, unknown> | null> {
-    this.logger.log('[GET] /block/redis/:blockNumber');
+    this.logger.log(`[GET] /block/redis/:blockNumber?blockNumber=${blockNumber}`);
     return await this.blockService.getRedisBlock(Number(blockNumber));
   }
 }

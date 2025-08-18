@@ -18,7 +18,7 @@ export default function BlocksPage() {
   const [totalBlocks, setTotalBlocks] = useState<number>(0);
 
   // Socket 연결
-  const { isConnected, lastBlock } = useSocket();
+  const { lastBlock } = useSocket();
 
   // 새로 추가된 블록 추적 (애니메이션용)
   const [newBlockNumbers, setNewBlockNumbers] = useState<Set<number>>(new Set());
@@ -97,7 +97,8 @@ export default function BlocksPage() {
       });
 
       // 총 블록 수 업데이트
-      setTotalBlocks((prev) => Math.max(prev, lastBlock.number + 1));
+      setTotalBlocks(totalBlocks + 1);
+      // setTotalBlocks((prev) => Math.max(prev, lastBlock.number > 10000 ? 10000 : lastBlock.number + 1));
     }
   }, [lastBlock, currentPage]);
 

@@ -247,13 +247,12 @@ export async function getBlocksFromAPI(
     const { data: blockStrings, total } = apiResponse;
 
     // JSON 문자열들을 파싱하여 BlockInfo 형태로 변환
-    const blocks: BlockInfo[] = blockStrings.map((blockStr: string) => {
-      const blockData = JSON.parse(blockStr);
+    const blocks: BlockInfo[] = blockStrings.map((blockData: BlockInfo) => {
       return {
         number: blockData.number,
         hash: blockData.hash ?? "",
         timestamp: blockData.timestamp,
-        transactionCount: blockData.transactions,
+        transactionCount: blockData.transactionCount || 0,
         gasUsed: blockData.gasUsed ?? "", // API에서 gasUsed 정보가 없으므로 기본값
         gasLimit: blockData.gasLimit ?? "", // API에서 gasLimit 정보가 없으므로 기본값
         miner: blockData.miner ?? "",
@@ -271,6 +270,51 @@ export async function getBlocksFromAPI(
     return { blocks, total };
   } catch (error) {
     console.error("API에서 블록 정보 가져오기 실패:", error);
+    throw error;
+  }
+}
+
+// API에서 특정 블록 정보 가져오기
+export async function getBlockFromAPI(blockNumber: number): Promise<BlockInfo | null> {
+  try {
+    const apiUrl = process.env.API_URL || "http://localhost:4000";
+    const response = await fetch(`${apiUrl}/block/redis/${blockNumber}`);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error(`API 호출 실패: ${response.status}`);
+    }
+
+    const blockData = await response.json();
+
+    console.log(blockData);
+
+    if (!blockData) {
+      return null;
+    }
+
+    // API에서 받은 데이터를 BlockInfo 형태로 변환
+    return {
+      number: blockData.number,
+      hash: blockData.hash ?? "",
+      timestamp: blockData.timestamp,
+      transactionCount: blockData.transactions || 0,
+      gasUsed: blockData.gasUsed ?? "",
+      gasLimit: blockData.gasLimit ?? "",
+      miner: blockData.miner ?? "",
+      parentHash: blockData.parentHash ?? "",
+      parentBeaconBlockRoot: blockData.parentBeaconBlockRoot ?? "",
+      nonce: blockData.nonce ?? "",
+      difficulty: blockData.difficulty ?? "",
+      stateRoot: blockData.stateRoot ?? "",
+      receiptsRoot: blockData.receiptsRoot ?? "",
+      blobGasUsed: blockData.blobGasUsed ?? "",
+      excessBlobGas: blockData.excessBlobGas ?? "",
+    };
+  } catch (error) {
+    console.error(`API에서 블록 ${blockNumber} 정보 가져오기 실패:`, error);
     throw error;
   }
 }
