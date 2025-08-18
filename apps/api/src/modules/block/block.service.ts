@@ -59,7 +59,9 @@ export class BlockService {
     if (block && block.transactions.length > 0) {
       for (const transaction of block.transactions) {
         const receipt = await this.ethers.jsonProvider.getTransactionReceipt(transaction);
-        this.logger.debug('트랜잭션 정보:', receipt);
+        if (receipt) {
+          await this.pushTransaction(receipt);
+        }
       }
     }
     return block;
@@ -86,6 +88,30 @@ export class BlockService {
       }
     }
 
+    const block = await this.getBlock(blockNumber);
+    if (block) {
+      return {
+        number: block.number,
+        hash: block.hash,
+        timestamp: block.timestamp,
+        transactions: block.transactions.length,
+        parentHash: block.parentHash,
+        parentBeaconBlockRoot: block.parentBeaconBlockRoot,
+        nonce: block.nonce,
+        difficulty: block.difficulty.toString(),
+        stateRoot: block.stateRoot,
+        receiptsRoot: block.receiptsRoot,
+        blobGasUsed: block.blobGasUsed?.toString() || null,
+        excessBlobGas: block.excessBlobGas?.toString() || null,
+        miner: block.miner,
+        prevRandao: block.prevRandao,
+        extraData: block.extraData,
+        baseFeePerGas: block.baseFeePerGas?.toString() || null,
+        gasLimit: block.gasLimit.toString(),
+        gasUsed: block.gasUsed.toString(),
+      };
+    }
+
     return null;
   }
 
@@ -97,7 +123,6 @@ export class BlockService {
   async blockPush(blockNumber: number): Promise<void> {
     const block: Block | null = await this.getBlock(blockNumber);
 
-    // TODO: 블록 정보 조회 실패 시 처리
     if (!block) {
       this.logger.error('❌ 블록 정보 조회 실패');
       return;
@@ -142,7 +167,8 @@ export class BlockService {
    * @param transaction
    */
   async pushTransaction(transaction: TransactionReceipt) {
-    await this.redis.set(CACHE_KEY.TRANSACTION, JSON.stringify(transaction));
+    await this.redis.lpush(CACHE_KEY.TRANSACTION, JSON.stringify(transaction));
+    await this.redis.ltrim(CACHE_KEY.TRANSACTION, 0, 9999);
   }
 
   /**
@@ -156,6 +182,25 @@ export class BlockService {
     const blocks = await this.redis.lrange(CACHE_KEY.BLOCK, offset, offset + limit - 1);
 
     const response = blocks.map((block) => JSON.parse(block) as Record<string, unknown>);
+
+    return {
+      data: response,
+      total: len,
+    };
+  }
+
+  /**
+   * 트랜잭션 정보 조회
+   *
+   * @param limit
+   * @param offset
+   * @returns
+   */
+  async getTransactions(limit: number, offset: number): Promise<{ data: Record<string, unknown>[]; total: number }> {
+    const len = await this.redis.llen(CACHE_KEY.TRANSACTION);
+    const transactions = await this.redis.lrange(CACHE_KEY.TRANSACTION, offset, offset + limit - 1);
+
+    const response = transactions.map((transaction) => JSON.parse(transaction) as Record<string, unknown>);
 
     return {
       data: response,

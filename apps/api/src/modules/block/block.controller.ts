@@ -27,4 +27,13 @@ export class BlockController {
     this.logger.log(`[GET] /block/redis/:blockNumber?blockNumber=${blockNumber}`);
     return await this.blockService.getRedisBlock(Number(blockNumber));
   }
+
+  @Get('transactions')
+  async getTransactions(
+    @Query('limit') limit: number,
+    @Query('offset') offset: number,
+  ): Promise<{ data: Record<string, unknown>[]; total: number }> {
+    this.logger.log(`[GET] /block/transaction?limit=${limit}&offset=${offset}`);
+    return await this.blockService.getTransactions(limit, offset);
+  }
 }

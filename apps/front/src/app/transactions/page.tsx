@@ -3,7 +3,7 @@
 
 import ErrorMessage from "@/components/ErrorMessage";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { getRecentBlocks, getTransactionsFromBlock, TransactionInfo } from "@/lib/web3";
+import { TransactionInfo } from "@/lib/web3";
 import { CreditCard, Lightbulb, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -19,44 +19,50 @@ export default function TransactionsPage() {
   // 페이지당 표시할 트랜잭션 수
   const TRANSACTIONS_PER_PAGE = 25;
 
-  // 트랜잭션 데이터를 불러오는 함수
+  // 트랜잭션 데이터를 API에서 불러오는 함수
   const loadTransactions = async (page: number = 1) => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // 최신 블록들에서 트랜잭션 수집
-      const recentBlocks = await getRecentBlocks(50); // 최근 50개 블록에서 트랜잭션 수집
-
-      const allTransactions: TransactionInfo[] = [];
-
-      // 각 블록에서 트랜잭션 가져오기
-      for (const block of recentBlocks) {
-        if (block.transactionCount > 0) {
-          const blockTransactions = await getTransactionsFromBlock(block.number);
-          // 트랜잭션에 블록 타임스탬프 추가
-          const transactionsWithTimestamp = blockTransactions.map((tx) => ({
-            ...tx,
-            timestamp: block.timestamp,
-          }));
-          allTransactions.push(...transactionsWithTimestamp);
-        }
+      const offset = (page - 1) * TRANSACTIONS_PER_PAGE;
+      const limit = TRANSACTIONS_PER_PAGE;
+      
+      // API에서 트랜잭션 데이터 가져오기
+      const response = await fetch(
+        `${process.env.API_URL || 'http://localhost:4000'}/block/transactions?limit=${limit}&offset=${offset}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`API 요청 실패: ${response.status}`);
       }
-
-      // 시간순으로 정렬 (최신 순)
-      allTransactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-      setTotalTransactions(allTransactions.length);
-
-      // 현재 페이지에 해당하는 트랜잭션들만 표시
-      const startIndex = (page - 1) * TRANSACTIONS_PER_PAGE;
-      const endIndex = startIndex + TRANSACTIONS_PER_PAGE;
-      const paginatedTransactions = allTransactions.slice(startIndex, endIndex);
-
-      setTransactions(paginatedTransactions);
+      
+      const data = await response.json();
+      
+      // API 응답에서 data와 total 추출
+      const transactionsData = data.data || [];
+      const totalCount = data.total || 0;
+      
+      // API 데이터를 TransactionInfo 형태로 변환
+      const formattedTransactions: TransactionInfo[] = transactionsData.map((tx: any) => ({
+        hash: tx.hash,
+        blockNumber: tx.blockNumber,
+        from: tx.from,
+        to: tx.to,
+        value: tx.value,
+        gasUsed: tx.gasUsed,
+        gasPrice: tx.gasPrice,
+        status: tx.status,
+        timestamp: tx.timestamp,
+        nonce: tx.nonce,
+        transactionIndex: tx.transactionIndex
+      }));
+      
+      setTransactions(formattedTransactions);
+      setTotalTransactions(totalCount);
     } catch (err) {
       console.error("트랜잭션 데이터 로딩 실패:", err);
-      setError("트랜잭션 데이터를 불러오는데 실패했습니다. 테스트넷 연결 상태를 확인해주세요.");
+      setError("트랜잭션 데이터를 불러오는데 실패했습니다. API 서버 연결 상태를 확인해주세요.");
     } finally {
       setIsLoading(false);
     }
@@ -147,7 +153,7 @@ export default function TransactionsPage() {
           <div className="mt-1 text-3xl font-bold text-gray-900">
             {totalTransactions.toLocaleString()}
           </div>
-          <div className="text-sm text-gray-500 mt-1">최근 50개 블록</div>
+          <div className="text-sm text-gray-500 mt-1">API에서 조회</div>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">

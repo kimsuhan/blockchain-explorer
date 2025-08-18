@@ -3,7 +3,7 @@
 
 import { useSocket } from "@/hooks/useSocket";
 import { checkNetworkConnection } from "@/lib/web3";
-import { BarChart3, Blocks, CreditCard, Search, User } from "lucide-react";
+import { BarChart3, Blocks, CreditCard, Search, User, Coins } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -102,6 +102,13 @@ export default function Header() {
             >
               <User className="w-4 h-4" />
               <span>계정</span>
+            </Link>
+            <Link
+              href="/token-factory"
+              className="hover:text-blue-200 transition-colors font-medium flex items-center space-x-1"
+            >
+              <Coins className="w-4 h-4" />
+              <span>토큰 발행</span>
             </Link>
           </div>
         </nav>
