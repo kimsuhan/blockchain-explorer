@@ -6,13 +6,14 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 export class BlockSchedule {
   constructor(private readonly blockService: BlockService) {}
 
-  @Cron(CronExpression.EVERY_SECOND)
-  handle() {
-    const initOn = this.blockService.initOn;
-    if (!initOn) {
+  @Cron(CronExpression.EVERY_5_SECONDS)
+  async handle() {
+    let isCall = true;
+    if (!isCall) {
       return;
     }
 
-    void this.blockService.initBlock();
+    await this.blockService.initBlock();
+    isCall = false;
   }
 }

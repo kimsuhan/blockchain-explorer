@@ -1,3 +1,4 @@
+import { BlockDto } from '@/modules/viem/dto/block.dto';
 import { Logger } from '@nestjs/common';
 import {
   ConnectedSocket,
@@ -45,7 +46,7 @@ export class BlockGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   }
 
   // 새 블록 알림을 모든 클라이언트에게 브로드캐스트
-  broadcastNewBlock(blockData: unknown): void {
+  broadcastNewBlock(blockData: BlockDto[]): void {
     this.logger.log(`Broadcasting new block`);
     this.server.emit('newBlock', blockData);
   }

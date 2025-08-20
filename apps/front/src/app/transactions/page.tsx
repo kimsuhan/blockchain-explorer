@@ -27,22 +27,22 @@ export default function TransactionsPage() {
 
       const offset = (page - 1) * TRANSACTIONS_PER_PAGE;
       const limit = TRANSACTIONS_PER_PAGE;
-      
+
       // API에서 트랜잭션 데이터 가져오기
       const response = await fetch(
-        `${process.env.API_URL || 'http://localhost:4000'}/block/transactions?limit=${limit}&offset=${offset}`
+        `${process.env.API_URL || "http://localhost:4000"}/block/transactions?limit=${limit}&offset=${offset}`
       );
-      
+
       if (!response.ok) {
         throw new Error(`API 요청 실패: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
+
       // API 응답에서 data와 total 추출
       const transactionsData = data.data || [];
       const totalCount = data.total || 0;
-      
+
       // API 데이터를 TransactionInfo 형태로 변환
       const formattedTransactions: TransactionInfo[] = transactionsData.map((tx: any) => ({
         hash: tx.hash,
@@ -55,9 +55,9 @@ export default function TransactionsPage() {
         status: tx.status,
         timestamp: tx.timestamp,
         nonce: tx.nonce,
-        transactionIndex: tx.transactionIndex
+        transactionIndex: tx.transactionIndex,
       }));
-      
+
       setTransactions(formattedTransactions);
       setTotalTransactions(totalCount);
     } catch (err) {
@@ -129,8 +129,7 @@ export default function TransactionsPage() {
             트랜잭션 목록
           </h1>
           <p className="text-gray-600 mt-2">
-            총 {totalTransactions.toLocaleString()}개의 트랜잭션 (페이지 {currentPage} /{" "}
-            {totalPages})
+            총 {totalTransactions.toLocaleString()}개의 트랜잭션 (페이지 {currentPage} / {totalPages})
           </p>
         </div>
 
@@ -147,27 +146,19 @@ export default function TransactionsPage() {
       {/* 트랜잭션 요약 통계 */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
-          <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-            총 트랜잭션
-          </div>
-          <div className="mt-1 text-3xl font-bold text-gray-900">
-            {totalTransactions.toLocaleString()}
-          </div>
+          <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">총 트랜잭션</div>
+          <div className="mt-1 text-3xl font-bold text-gray-900">{totalTransactions.toLocaleString()}</div>
           <div className="text-sm text-gray-500 mt-1">API에서 조회</div>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
-          <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-            현재 페이지
-          </div>
+          <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">현재 페이지</div>
           <div className="mt-1 text-3xl font-bold text-gray-900">{transactions.length}</div>
           <div className="text-sm text-gray-500 mt-1">표시 중인 트랜잭션</div>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-purple-500">
-          <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-            성공한 트랜잭션
-          </div>
+          <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">성공한 트랜잭션</div>
           <div className="mt-1 text-3xl font-bold text-gray-900">
             {transactions.filter((tx) => tx.status === 1).length}
           </div>
@@ -192,9 +183,7 @@ export default function TransactionsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   트랜잭션 해시
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  블록
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">블록</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   보내는 곳
                 </th>
@@ -207,12 +196,8 @@ export default function TransactionsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   가스 사용
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  상태
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  시간
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">시간</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -230,20 +215,14 @@ export default function TransactionsPage() {
 
                   {/* 블록 번호 */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Link
-                      href={`/blocks/${tx.blockNumber}`}
-                      className="text-gray-600 hover:text-blue-600 font-medium"
-                    >
+                    <Link href={`/blocks/${tx.blockNumber}`} className="text-gray-600 hover:text-blue-600 font-medium">
                       #{tx.blockNumber}
                     </Link>
                   </td>
 
                   {/* 보내는 주소 */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">
-                    <span
-                      className="cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
-                      title={tx.from}
-                    >
+                    <span className="cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors" title={tx.from}>
                       {formatAddress(tx.from)}
                     </span>
                   </td>
@@ -251,10 +230,7 @@ export default function TransactionsPage() {
                   {/* 받는 주소 */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">
                     {tx.to ? (
-                      <span
-                        className="cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
-                        title={tx.to}
-                      >
+                      <span className="cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors" title={tx.to}>
                         {formatAddress(tx.to)}
                       </span>
                     ) : (
@@ -265,20 +241,14 @@ export default function TransactionsPage() {
                   {/* 전송 금액 */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <div className="flex items-center">
-                      <span
-                        className={`font-medium ${
-                          parseFloat(tx.value) > 0 ? "text-green-600" : "text-gray-600"
-                        }`}
-                      >
+                      <span className={`font-medium ${parseFloat(tx.value) > 0 ? "text-green-600" : "text-gray-600"}`}>
                         {formatEther(tx.value)} ETH
                       </span>
                     </div>
                   </td>
 
                   {/* 가스 사용량 */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {formatGas(tx.gasUsed)}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatGas(tx.gasUsed)}</td>
 
                   {/* 트랜잭션 상태 */}
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -317,9 +287,7 @@ export default function TransactionsPage() {
           <div className="text-center py-12">
             <div className="text-4xl mb-4">📪</div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">트랜잭션이 없습니다</h3>
-            <p className="text-gray-500">
-              아직 생성된 트랜잭션이 없거나 데이터를 불러올 수 없습니다.
-            </p>
+            <p className="text-gray-500">아직 생성된 트랜잭션이 없거나 데이터를 불러올 수 없습니다.</p>
           </div>
         )}
       </div>
@@ -407,8 +375,7 @@ export default function TransactionsPage() {
             • <strong>가스 사용</strong>: 트랜잭션 처리에 사용된 가스 양입니다
           </li>
           <li>
-            • <strong>상태</strong>: ✓ 성공 = 정상 처리, ✗ 실패 = 처리 실패, ⏳ 대기중 = 아직 처리
-            중
+            • <strong>상태</strong>: ✓ 성공 = 정상 처리, ✗ 실패 = 처리 실패, ⏳ 대기중 = 아직 처리 중
           </li>
           <li>
             • <strong>컨트랙트 생성</strong>: 새로운 스마트 컨트랙트가 배포된 트랜잭션입니다

@@ -13,7 +13,7 @@ export class BlockController {
     @Query('offset') offset: number,
   ): Promise<{ data: Record<string, unknown>[]; total: number }> {
     this.logger.log(`[GET] /block?limit=${limit}&offset=${offset}`);
-    return await this.blockService.getBlocks(limit, offset);
+    return await this.blockService.getBlocks(Number(limit), Number(offset));
   }
 
   @Get('block/:blockNumber')
@@ -25,7 +25,7 @@ export class BlockController {
   @Get('redis/:blockNumber')
   async getRedisBlock(@Param('blockNumber') blockNumber: number): Promise<Record<string, unknown> | null> {
     this.logger.log(`[GET] /block/redis/:blockNumber?blockNumber=${blockNumber}`);
-    return await this.blockService.getRedisBlock(Number(blockNumber));
+    return await this.blockService.getBlock(Number(blockNumber));
   }
 
   @Get('transactions')

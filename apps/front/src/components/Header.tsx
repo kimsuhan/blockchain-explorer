@@ -1,10 +1,10 @@
 // 블록 탐색기 헤더 컴포넌트
 "use client";
 
+import { useWallet } from "@/contexts/WalletContext";
 import { useSocket } from "@/hooks/useSocket";
 import { checkNetworkConnection } from "@/lib/web3";
-import { useWallet } from "@/contexts/WalletContext";
-import { BarChart3, Blocks, CreditCard, Search, User, Coins, Wallet } from "lucide-react";
+import { BarChart3, Blocks, ChevronDown, Coins, CreditCard, Grid3X3, Search, User, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -15,9 +15,25 @@ export default function Header() {
 
   // WebSocket 연결 상태
   const { isConnected: isSocketConnected } = useSocket();
-  
+
   // 지갑 연결 상태
   const { isConnected: isWalletConnected, address, isConnecting, connectWallet, disconnectWallet } = useWallet();
+
+  // Apps 드롭다운 상태
+  const [isAppsOpen, setIsAppsOpen] = useState(false);
+
+  // 드롭다운 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest(".apps-dropdown")) {
+        setIsAppsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // 컴포넌트가 마운트될 때 네트워크 연결 상태 확인
   useEffect(() => {
@@ -94,7 +110,7 @@ export default function Header() {
                 </div>
               )}
             </div>
-            
+
             {/* 네트워크 정보 */}
             <div className="text-sm text-blue-200 space-y-1">
               <div>RPC: {process.env.RPC_URL}</div>
@@ -109,7 +125,7 @@ export default function Header() {
                   />
                   <span>RPC: {isChecking ? "확인중" : isConnected ? "연결됨" : "연결 끊김"}</span>
                 </div>
-                
+
                 {/* WebSocket 연결 상태 */}
                 <div className="flex items-center space-x-2">
                   <div className={`w-2 h-2 rounded-full ${isSocketConnected ? "bg-green-400" : "bg-red-400"}`} />
@@ -148,13 +164,52 @@ export default function Header() {
               <User className="w-4 h-4" />
               <span>계정</span>
             </Link>
-            <Link
-              href="/token-factory"
-              className="hover:text-blue-200 transition-colors font-medium flex items-center space-x-1"
-            >
-              <Coins className="w-4 h-4" />
-              <span>토큰 발행</span>
-            </Link>
+
+            {/* Apps 드롭다운 메뉴 */}
+            <div className="relative apps-dropdown">
+              <button
+                onClick={() => setIsAppsOpen(!isAppsOpen)}
+                onMouseEnter={() => setIsAppsOpen(true)}
+                className="hover:text-blue-200 transition-colors font-medium flex items-center space-x-1"
+              >
+                <Grid3X3 className="w-4 h-4" />
+                <span>Apps</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${isAppsOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {/* 드롭다운 메뉴 */}
+              {isAppsOpen && (
+                <div
+                  className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
+                  onMouseLeave={() => setIsAppsOpen(false)}
+                >
+                  <Link
+                    href="/token-factory"
+                    className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    onClick={() => setIsAppsOpen(false)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Coins className="w-4 h-4" />
+                      <div>
+                        <div className="font-medium">토큰 팩토리</div>
+                        <div className="text-xs text-gray-500">ERC-20 토큰 발행</div>
+                      </div>
+                    </div>
+                  </Link>
+
+                  {/* 향후 추가될 앱들을 위한 예시 */}
+                  <div className="block px-4 py-2 text-gray-400 cursor-not-allowed">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                      <div>
+                        <div className="font-medium">더 많은 앱</div>
+                        <div className="text-xs text-gray-400">곧 출시 예정</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </nav>
       </div>

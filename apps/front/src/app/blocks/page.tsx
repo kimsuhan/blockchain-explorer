@@ -18,7 +18,7 @@ export default function BlocksPage() {
   const [totalBlocks, setTotalBlocks] = useState<number>(0);
 
   // Socket 연결
-  const { lastBlock } = useSocket();
+  const { lastBlocks } = useSocket();
 
   // 새로 추가된 블록 추적 (애니메이션용)
   const [newBlockNumbers, setNewBlockNumbers] = useState<Set<number>>(new Set());
@@ -66,41 +66,44 @@ export default function BlocksPage() {
     loadBlocks(currentPage);
   }, [currentPage]);
 
-  // 새 블록이 도착했을 때 첫 페이지라면 블록 목록에 추가
+  // 새 블록들이 도착했을 때 첫 페이지라면 블록 목록에 추가
   useEffect(() => {
-    if (lastBlock && currentPage === 1) {
-      console.log("새 블록 감지, 목록에 추가:", lastBlock);
+    if (lastBlocks && lastBlocks.length > 0 && currentPage === 1) {
+      console.log("새 블록들 감지, 목록에 추가:", lastBlocks);
 
       setBlocks((prevBlocks) => {
-        // 중복 체크
-        const exists = prevBlocks.some((block) => block.number === lastBlock.number);
-        if (exists) {
-          return prevBlocks;
-        }
-
-        // 새 블록을 맨 앞에 추가하고 최대 20개만 유지
-        const newBlocks = [lastBlock, ...prevBlocks].slice(0, BLOCKS_PER_PAGE);
+        // 기존 블록들과 새 블록들을 합치고 중복 제거
+        const allBlocks = [...lastBlocks, ...prevBlocks];
+        const uniqueBlocks = allBlocks.filter((block, index, self) => 
+          index === self.findIndex(b => b.number === block.number)
+        );
+        
+        // 블록 번호 기준으로 내림차순 정렬하고 최대 BLOCKS_PER_PAGE 개만 유지
+        const sortedBlocks = uniqueBlocks
+          .sort((a, b) => b.number - a.number)
+          .slice(0, BLOCKS_PER_PAGE);
 
         // 새 블록 애니메이션을 위해 추가
-        setNewBlockNumbers((prev) => new Set([...prev, lastBlock.number]));
+        const newNumbers = new Set(lastBlocks.map(block => block.number));
+        setNewBlockNumbers((prev) => new Set([...prev, ...newNumbers]));
 
         // 3초 후 애니메이션 제거
         setTimeout(() => {
           setNewBlockNumbers((prev) => {
             const next = new Set(prev);
-            next.delete(lastBlock.number);
+            lastBlocks.forEach(block => next.delete(block.number));
             return next;
           });
         }, 3000);
 
-        return newBlocks;
+        return sortedBlocks;
       });
 
-      // 총 블록 수 업데이트
-      setTotalBlocks(totalBlocks + 1);
-      // setTotalBlocks((prev) => Math.max(prev, lastBlock.number > 10000 ? 10000 : lastBlock.number + 1));
+      // 총 블록 수 업데이트 (가장 최신 블록 기준)
+      const latestBlock = lastBlocks[0];
+      setTotalBlocks((prev) => Math.max(prev, latestBlock.number + 1));
     }
-  }, [lastBlock, currentPage]);
+  }, [lastBlocks, currentPage]);
 
   // 페이지 변경 함수
   const handlePageChange = (newPage: number) => {

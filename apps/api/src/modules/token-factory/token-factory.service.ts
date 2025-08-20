@@ -20,7 +20,7 @@ export class TokenFactoryService {
   constructor(private readonly etherService: EthersService) {
     this.setupEventListeners();
 
-    const path = `/Users/suhankim/Developer/workspace/suhan/blockchain-explorer/apps/api/src/modules/token-factory/lowdb/tokens.db.json`;
+    const path = `/Users/suhankim/Developer/workspace/suhan/blockchain-explorer/apps/api/src/modules/token-factory/lowdb/tokens.db.json`; // TODO: 환경변수로 변경
 
     void JSONFilePreset(path, { tokens: [] }).then((db) => {
       this.db = db;
@@ -70,11 +70,14 @@ export class TokenFactoryService {
       return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const tokenAddress: string = await this.etherService.tokenFactoryContract.tokenAddresses(symbol);
+
     this.db.data.tokens.unshift({
       name,
       symbol,
       initialSupply,
-      address,
+      address: tokenAddress,
       txHash,
       owner,
     });
@@ -111,6 +114,9 @@ export class TokenFactoryService {
       if (event instanceof EventLog) {
         const [name, symbol, initialSupply, owner] = event['args'];
 
+        // 컨트랙트 함수 호출 (ESLint 에러 방지)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
+        const tokenAddress: string = await this.etherService.tokenFactoryContract.tokenAddresses(symbol);
         const filteredToken = currentToken.filter((token) => token.symbol === symbol);
 
         const transaction = await event.getTransaction();
@@ -119,10 +125,10 @@ export class TokenFactoryService {
           this.db.data.tokens.unshift({
             name: name as string,
             symbol: symbol as string,
-            initialSupply: ethers.formatEther(initialSupply as bigint),
+            initialSupply: initialSupply as string,
             owner: owner as string,
             txHash: transaction.hash,
-            address: event.address,
+            address: tokenAddress,
           });
         }
       }
