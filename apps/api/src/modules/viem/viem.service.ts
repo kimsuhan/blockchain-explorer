@@ -1,27 +1,48 @@
+import chainConfig from '@/config/chain.config';
 import { BlockDto } from '@/modules/viem/dto/block.dto';
 import { toNumber } from '@/utils/transform.util';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ConfigType } from '@nestjs/config';
 import { Block, createPublicClient, http, PublicClient } from 'viem';
-import { mainnet } from 'viem/chains';
 
 @Injectable()
-export class ViemService {
+export class ViemService implements OnModuleInit {
+  private readonly logger = new Logger(ViemService.name);
   publicClient: PublicClient;
-  constructor() {
-    this.setupPublicClient();
-  }
+
+  constructor(
+    @Inject(chainConfig.KEY)
+    private chainConfigs: ConfigType<typeof chainConfig>,
+  ) {}
 
   /**
-   * Public Client 설정
+   * 모듈 초기화
    */
-  private setupPublicClient() {
+  onModuleInit() {
     try {
+      this.logger.log('┌─────────────────────────────┐');
+      this.logger.log('  Viem 세팅 시작');
+      this.logger.log(`  RPC_URL: ${this.chainConfigs.rpcUrl}`);
+
       this.publicClient = createPublicClient({
-        chain: mainnet,
-        transport: http(process.env.RPC_URL),
+        chain: {
+          id: Number(this.chainConfigs.chainId),
+          name: 'Ethereum',
+          nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+          blockTime: 10_000,
+          rpcUrls: {
+            default: {
+              http: [this.chainConfigs.rpcUrl as string],
+            },
+          },
+          testnet: true,
+        },
+        transport: http(this.chainConfigs.rpcUrl),
       });
+
+      this.logger.log('└─────────────────────────────┘');
     } catch (error) {
-      console.error(error);
+      this.logger.error(error);
     }
   }
 
@@ -46,7 +67,7 @@ export class ViemService {
       blockNumber: BigInt(blockNumber),
     });
 
-    const transactions = [];
+    // const transactions = [];
     if (Array.isArray(block.transactions)) {
       for (const transaction of block.transactions) {
         if (typeof transaction === 'string' && transaction.startsWith('0x')) {

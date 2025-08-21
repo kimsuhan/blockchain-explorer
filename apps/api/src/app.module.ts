@@ -1,16 +1,27 @@
-import { AppController } from '@/app.controller';
-import { AppService } from '@/app.service';
-import { BlockModule } from '@/modules/block/block.module';
-import { RedisCacheModule } from '@/modules/cache/redis-cache.module';
-import { EthersModule } from '@/modules/ethers/ethers.module';
-import { TokenFactoryModule } from '@/modules/token-factory/token-factory.module';
+import chainConfig from '@/config/chain.config';
+import redisConfig from '@/config/redis.config';
+import { PrismaModule } from '@/modules/prisma/prisma.module';
+import { RedisModule } from '@/modules/redis/redis.module';
 import { ViemModule } from '@/modules/viem/viem.module';
 import { Module } from '@nestjs/common';
-import { ScheduleModule } from '@nestjs/schedule';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [RedisCacheModule, BlockModule, EthersModule, ScheduleModule.forRoot(), TokenFactoryModule, ViemModule],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['../../../.env'],
+      load: [redisConfig, chainConfig],
+    }), // Config Module
+
+    RedisModule, // Redis Module
+    PrismaModule, // Prisma Module
+    ViemModule, // Viem Module
+
+    // BlockModule,
+    // EthersModule,
+    // ScheduleModule.forRoot(),
+    // TokenFactoryModule,
+  ],
 })
 export class AppModule {}

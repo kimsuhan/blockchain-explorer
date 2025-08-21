@@ -1,8 +1,10 @@
+import { PrismaService } from '@/modules/prisma/prisma.service';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 import { AppModule } from './app.module';
+import { RedisService } from './modules/redis/redis.service';
 
 // 루트 .env 파일 로드 (Docker와 로컬 환경 모두 지원)
 const envPaths = [
@@ -50,6 +52,19 @@ async function bootstrap() {
 
   const port = process.env.API_PORT || process.env.PORT || 4000;
   await app.listen(port);
+
+  // redis 연결 테스트
+  const redisReady = app.get(RedisService).isReady();
+  if (!redisReady) {
+    console.error('Redis 연결 실패');
+    process.exit(1);
+  }
+
+  const prismaReady = await app.get(PrismaService).isReady();
+  if (!prismaReady) {
+    console.error('Prisma 연결 실패');
+    process.exit(1);
+  }
 
   console.log(`🚀 API Server running on http://localhost:${port}`);
 }

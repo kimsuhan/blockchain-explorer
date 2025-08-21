@@ -1,33 +1,25 @@
+import { TOKEN_FACTORY_ABI, TOKEN_FACTORY_ADDRESS } from '@/modules/ethers/consts/token-factory.const';
 import { EthersService } from '@/modules/ethers/ethers.service';
-import { Injectable, Logger } from '@nestjs/common';
-import { ContractEventPayload, ethers, EventLog } from 'ethers';
-import { Low } from 'lowdb/lib';
-import { JSONFilePreset } from 'lowdb/node';
+import { PrismaService } from '@/modules/prisma/prisma.service';
+import { ViemService } from '@/modules/viem/viem.service';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ContractEventPayload } from 'ethers';
 
 @Injectable()
-export class TokenFactoryService {
+export class TokenFactoryService implements OnModuleInit {
   private readonly logger = new Logger(TokenFactoryService.name);
-  private db: Low<{
-    tokens: {
-      name: string;
-      symbol: string;
-      initialSupply: string;
-      address: string;
-      txHash: string;
-      owner: string;
-    }[];
-  }>;
-  constructor(private readonly etherService: EthersService) {
-    this.setupEventListeners();
 
-    const path = `/Users/suhankim/Developer/workspace/suhan/blockchain-explorer/apps/api/src/modules/token-factory/lowdb/tokens.db.json`; // TODO: 환경변수로 변경
+  async onModuleInit(): Promise<void> {
+    void this.setupEventListeners();
 
-    void JSONFilePreset(path, { tokens: [] }).then((db) => {
-      this.db = db;
-    });
-
-    void this.init();
+    await this.init();
   }
+
+  constructor(
+    private readonly etherService: EthersService,
+    private readonly viemService: ViemService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   /**
    * 실시간 이벤트 리스너 설정
@@ -39,9 +31,9 @@ export class TokenFactoryService {
       'TokenDeployed',
       (name: string, symbol: string, initialSupply: bigint, owner: string, event: ContractEventPayload) => {
         this.logger.log(`TokenDeployed: ${name} ${symbol} ${initialSupply} ${owner}`);
-        const supply = ethers.formatEther(initialSupply);
+        // const supply = ethers.formatEther(initialSupply);
 
-        void this.insertToken(name, symbol, supply, owner, event);
+        // void this.insertToken(name, symbol, initialSupply, owner, event);
       },
     );
   }
@@ -55,34 +47,12 @@ export class TokenFactoryService {
    * @param owner 토큰 소유자
    * @param event 이벤트 정보
    */
-  async insertToken(name: string, symbol: string, initialSupply: string, owner: string, event: ContractEventPayload) {
-    const transaction = await event.getTransaction();
-    const txHash = transaction.hash;
-    const address = transaction.to;
-
-    if (address === null) {
-      this.logger.error('address is null');
-      return;
-    }
-
-    if (txHash === null) {
-      this.logger.error('txHash is null');
-      return;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const tokenAddress: string = await this.etherService.tokenFactoryContract.tokenAddresses(symbol);
-
-    this.db.data.tokens.unshift({
-      name,
-      symbol,
-      initialSupply,
-      address: tokenAddress,
-      txHash,
-      owner,
+  async insertToken(name: string, symbol: string, initialSupply: string, tokenAddress: `0x${string}`) {
+    await this.prisma.token.upsert({
+      where: { address: tokenAddress },
+      update: { name, symbol },
+      create: { address: tokenAddress, name, symbol, decimals: 18, totalSupply: initialSupply },
     });
-
-    void this.db.write();
   }
 
   /**
@@ -91,49 +61,44 @@ export class TokenFactoryService {
    * @returns 토큰 목록
    */
   getTokens(limit: number, offset: number) {
-    return {
-      data: this.db.data.tokens.slice(offset, offset + limit),
-      total: this.db.data.tokens.length,
-    };
+    return this.prisma.token.findMany({});
+    // return {
+    //   data: this.db.data.tokens.slice(offset, offset + limit),
+    //   total: this.db.data.tokens.length,
+    // };
   }
 
   /**
    * 토큰 목록 초기화
    */
   async init() {
-    const tokenDeployedFilter = this.etherService.tokenFactoryContract.filters.TokenDeployed();
-    const tokenDeployedEvents = await this.etherService.tokenFactoryContract.queryFilter(
-      tokenDeployedFilter,
-      0,
-      'latest',
-    );
+    const events = await this.viemService.publicClient.getContractEvents({
+      address: TOKEN_FACTORY_ADDRESS,
+      eventName: 'TokenDeployed',
+      abi: TOKEN_FACTORY_ABI,
+      toBlock: 'latest',
+      fromBlock: 0n,
+    });
 
-    const currentToken = this.db.data.tokens;
+    for (const event of events) {
+      const args = event['args'] as { name: string; symbol: string; initialSupply: bigint; owner: string };
 
-    for (const event of tokenDeployedEvents) {
-      if (event instanceof EventLog) {
-        const [name, symbol, initialSupply, owner] = event['args'];
+      const data = await this.viemService.publicClient.readContract({
+        address: TOKEN_FACTORY_ADDRESS,
+        abi: TOKEN_FACTORY_ABI,
+        functionName: 'tokenAddresses',
+        args: [args.symbol],
+      });
 
-        // 컨트랙트 함수 호출 (ESLint 에러 방지)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
-        const tokenAddress: string = await this.etherService.tokenFactoryContract.tokenAddresses(symbol);
-        const filteredToken = currentToken.filter((token) => token.symbol === symbol);
+      const findToken = await this.prisma.token.count({ where: { address: data as `0x${string}` } });
 
-        const transaction = await event.getTransaction();
-        if (filteredToken.length === 0) {
-          this.logger.log(`🔍 새로운 토큰 발견: ${name} ${symbol} ${initialSupply} ${owner}`);
-          this.db.data.tokens.unshift({
-            name: name as string,
-            symbol: symbol as string,
-            initialSupply: initialSupply as string,
-            owner: owner as string,
-            txHash: transaction.hash,
-            address: tokenAddress,
-          });
-        }
+      console.log(findToken);
+
+      // const transaction = await event.getTransaction();
+      if (findToken === 0) {
+        this.logger.log(`🔍 새로운 토큰 발견: ${args.name} ${args.symbol} ${args.initialSupply} ${args.owner}`);
+        await this.insertToken(args.name, args.symbol, String(args.initialSupply), data as `0x${string}`);
       }
     }
-
-    void this.db.write();
   }
 }
